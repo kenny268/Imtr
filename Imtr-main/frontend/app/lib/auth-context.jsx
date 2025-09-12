@@ -1,0 +1,200 @@
+'use client';
+
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from './api';
+
+const AuthContext = createContext({});
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Get current user profile
+  const { data: userData, isLoading: userLoading, error: userError } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => api.get('/auth/me').then(res => res.data.data),
+    retry: false
+  });
+
+  // Handle user data changes
+  useEffect(() => {
+    if (userData) {
+      setUser(userData);
+      setLoading(false);
+    } else if (userError) {
+      setUser(null);
+      setLoading(false);
+    }
+  }, [userData, userError]);
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: (credentials) => api.post('/auth/login', credentials),
+    onSuccess: (response) => {
+      const userData = response.data.data;
+      setUser(userData);
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      router.push('/dashboard');
+    },
+    onError: (error) => {
+      console.error('Login error:', error);
+    }
+  });
+
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: () => api.post('/auth/logout'),
+    onSuccess: () => {
+      setUser(null);
+      queryClient.clear();
+      router.push('/login');
+    },
+    onError: (error) => {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      setUser(null);
+      queryClient.clear();
+      router.push('/login');
+    }
+  });
+
+  // Login function
+  const login = async (credentials) => {
+    try {
+      await loginMutation.mutateAsync(credentials);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Logout function
+  const logout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      // Force logout even if API call fails
+      setUser(null);
+      queryClient.clear();
+      router.push('/login');
+    }
+  };
+
+  // Check if user is authenticated
+  const isAuthenticated = !!user;
+
+  // Check if user has specific role
+  const hasRole = (role) => {
+    return user?.role === role;
+  };
+
+  // Check if user has any of the specified roles
+  const hasAnyRole = (roles) => {
+    return roles.includes(user?.role);
+  };
+
+  // Get user permissions based on role
+  const getPermissions = () => {
+    if (!user) return [];
+    
+    const rolePermissions = {
+      ADMIN: [
+        'users:read', 'users:write', 'users:delete',
+        'students:read', 'students:write', 'students:delete',
+        'courses:read', 'courses:write', 'courses:delete',
+        'finance:read', 'finance:write',
+        'reports:read', 'reports:write',
+        'system:admin'
+      ],
+      LECTURER: [
+        'students:read',
+        'courses:read', 'courses:write',
+        'attendance:read', 'attendance:write',
+        'grades:read', 'grades:write',
+        'research:read', 'research:write'
+      ],
+      STUDENT: [
+        'profile:read', 'profile:write',
+        'courses:read',
+        'grades:read',
+        'attendance:read',
+        'finance:read'
+      ],
+      FINANCE: [
+        'students:read',
+        'finance:read', 'finance:write',
+        'reports:read'
+      ],
+      LIBRARIAN: [
+        'library:read', 'library:write',
+        'students:read'
+      ],
+      IT: [
+        'system:read', 'system:write',
+        'users:read', 'users:write'
+      ]
+    };
+    
+    return rolePermissions[user.role] || [];
+  };
+
+  // Check if user has specific permission
+  const hasPermission = (permission) => {
+    const permissions = getPermissions();
+    return permissions.includes(permission);
+  };
+
+  // Check if user has any of the specified permissions
+  const hasAnyPermission = (permissions) => {
+    const userPermissions = getPermissions();
+    return permissions.some(permission => userPermissions.includes(permission));
+  };
+
+  // Redirect to login if not authenticated
+  const requireAuth = () => {
+    if (!isAuthenticated && !loading) {
+      router.push('/login');
+    }
+  };
+
+  // Redirect to dashboard if already authenticated
+  const requireGuest = () => {
+    if (isAuthenticated && !loading) {
+      router.push('/dashboard');
+    }
+  };
+
+  const value = {
+    user,
+    loading: loading || userLoading,
+    isAuthenticated,
+    login,
+    logout,
+    hasRole,
+    hasAnyRole,
+    getPermissions,
+    hasPermission,
+    hasAnyPermission,
+    requireAuth,
+    requireGuest,
+    loginLoading: loginMutation.isPending,
+    logoutLoading: logoutMutation.isPending
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

@@ -1,0 +1,51 @@
+const express = require('express');
+const router = express.Router();
+
+// Import route modules
+const authRoutes = require('./modules/auth/auth.routes');
+const userRoutes = require('./modules/users/user.routes');
+const studentRoutes = require('./modules/students/student.routes');
+const courseRoutes = require('./modules/courses/course.routes');
+const academicRoutes = require('./modules/academics/academic.routes');
+const financeRoutes = require('./modules/finance/finance.routes');
+const libraryRoutes = require('./modules/library/library.routes');
+const researchRoutes = require('./modules/research/research.routes');
+const notificationRoutes = require('./modules/notifications/notification.routes');
+const reportRoutes = require('./modules/reports/report.routes');
+
+// Mount routes
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/students', studentRoutes);
+router.use('/courses', courseRoutes);
+router.use('/academics', academicRoutes);
+router.use('/finance', financeRoutes);
+router.use('/library', libraryRoutes);
+router.use('/research', researchRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/reports', reportRoutes);
+
+// API info endpoint
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'IMTR School Management System API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/auth',
+      users: '/users',
+      students: '/students',
+      courses: '/courses',
+      academics: '/academics',
+      finance: '/finance',
+      library: '/library',
+      research: '/research',
+      notifications: '/notifications',
+      reports: '/reports'
+    },
+    documentation: '/docs',
+    health: '/health'
+  });
+});
+
+module.exports = router;
