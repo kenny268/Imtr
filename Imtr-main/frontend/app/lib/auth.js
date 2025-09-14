@@ -39,7 +39,7 @@ export async function getServerSession() {
  * @param {string} redirectTo - Redirect path if not authenticated
  * @returns {Promise<Object>} - User session
  */
-export async function requireAuth(redirectTo = '/login') {
+export async function requireAuth(redirectTo = '/auth/login') {
   const session = await getServerSession();
   
   if (!session) {
