@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   HiUsers, 
+  HiUser,
   HiAcademicCap, 
   HiUserGroup, 
   HiBookOpen, 
@@ -13,16 +15,265 @@ import {
   HiCog,
   HiTrendingUp,
   HiClock,
-  HiCheckCircle
+  HiCheckCircle,
+  HiPlus,
+  HiEye,
+  HiPencil,
+  HiTrash,
+  HiRefresh,
+  HiSearch,
+  HiSortAscending,
+  HiSortDescending,
+  HiViewGrid,
+  HiViewList,
+  HiFilter,
+  HiChevronDown
 } from 'react-icons/hi';
+import { useAuth } from '@/app/lib/auth-context';
+import { api } from '@/app/lib/api';
+import CreateUserModal from '@/app/components/modals/CreateUserModal';
+import StudentApprovalModal from '@/app/components/modals/StudentApprovalModal';
+import StudentsSection from './StudentsSection';
+import UserManagementSection from './UserManagementSection';
 
 const AdminDashboard = ({ activeMenu }) => {
+  const { hasPermission } = useAuth();
+  const [students, setStudents] = useState([]);
+  const [pendingRegistrations, setPendingRegistrations] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState({
+    totalStudents: 0,
+    totalLecturers: 0,
+    totalUsers: 0,
+    pendingApprovals: 0
+  });
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    total_pages: 0
+  });
+  const [approvalPagination, setApprovalPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    total_pages: 0
+  });
+  const [userPagination, setUserPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    total_pages: 0
+  });
+
+  // Advanced filtering and sorting states
+  const [studentFilters, setStudentFilters] = useState({
+    search: '',
+    year: '',
+    program: '',
+    status: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
+  const [studentViewMode, setStudentViewMode] = useState('table'); // 'table' or 'grid'
+  const [showStudentFilters, setShowStudentFilters] = useState(false);
+
+  // User management filters and view mode
+  const [userFilters, setUserFilters] = useState({
+    search: '',
+    role: '',
+    status: '',
+    emailVerified: '',
+    sortBy: 'created_at',
+    sortOrder: 'desc'
+  });
+  const [userViewMode, setUserViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Fetch dashboard statistics
+  const fetchDashboardStats = async () => {
+    try {
+      const [studentsRes, usersRes, approvalsRes] = await Promise.all([
+        api.get('/students?page=1&limit=1'),
+        api.get('/users?page=1&limit=1'),
+        api.get('/student-approvals/pending-registrations?page=1&limit=1')
+      ]);
+
+      setDashboardStats({
+        totalStudents: studentsRes.data.data.pagination?.total || 0,
+        totalLecturers: usersRes.data.data.users?.filter(u => u.role === 'LECTURER').length || 0,
+        totalUsers: usersRes.data.data.pagination?.total || 0,
+        pendingApprovals: approvalsRes.data.data.pagination?.total || 0
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    }
+  };
+
   const stats = [
-    { label: 'Total Students', value: '1,234', icon: HiAcademicCap, change: '+12%', color: 'text-blue-600' },
-    { label: 'Total Lecturers', value: '45', icon: HiUserGroup, change: '+5%', color: 'text-green-600' },
-    { label: 'Active Courses', value: '78', icon: HiBookOpen, change: '+8%', color: 'text-purple-600' },
-    { label: 'Total Revenue', value: 'KES 2.4M', icon: HiCurrencyDollar, change: '+15%', color: 'text-yellow-600' },
+    { label: 'Total Students', value: dashboardStats.totalStudents.toString(), icon: HiAcademicCap, change: '+12%', color: 'text-blue-600' },
+    { label: 'Total Lecturers', value: dashboardStats.totalLecturers.toString(), icon: HiUserGroup, change: '+5%', color: 'text-green-600' },
+    { label: 'Total Users', value: dashboardStats.totalUsers.toString(), icon: HiUsers, change: '+8%', color: 'text-purple-600' },
+    { label: 'Pending Approvals', value: dashboardStats.pendingApprovals.toString(), icon: HiClock, change: '+15%', color: 'text-yellow-600' },
   ];
+
+  // Fetch students with filters (from users endpoint with role filter)
+  const fetchStudents = async (page = 1, filters = studentFilters) => {
+    if (!hasPermission('students:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        role: 'STUDENT', // Filter for students only
+        ...(filters.search && { search: filters.search }),
+        ...(filters.year && { year: filters.year }),
+        ...(filters.program && { program: filters.program }),
+        ...(filters.status && { status: filters.status }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/users?${queryParams}`);
+      if (response.data.success) {
+        // Transform users to students format for display
+        const studentUsers = response.data.data.users || [];
+        setStudents(studentUsers);
+        setPagination(response.data.data.pagination || pagination);
+      }
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle filter changes
+  const handleStudentFilterChange = (key, value) => {
+    const newFilters = { ...studentFilters, [key]: value };
+    setStudentFilters(newFilters);
+    fetchStudents(1, newFilters);
+  };
+
+  // Refresh students
+  const refreshStudents = () => {
+    fetchStudents(pagination.current_page, studentFilters);
+  };
+
+  // Fetch pending registrations
+  const fetchPendingRegistrations = async (page = 1) => {
+    if (!hasPermission('students:write')) return;
+    
+    try {
+      setLoading(true);
+      const response = await api.get(`/student-approvals/pending-registrations?page=${page}&limit=10`);
+      if (response.data.success) {
+        setPendingRegistrations(response.data.data.registrations || []);
+        setApprovalPagination(response.data.data.pagination || approvalPagination);
+      }
+    } catch (error) {
+      console.error('Error fetching pending registrations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Approve student registration
+  const handleApproveStudent = async (userId, approvalData) => {
+    try {
+      const response = await api.post(`/student-approvals/approve/${userId}`, approvalData);
+      if (response.data.success) {
+        // Refresh both lists
+        await fetchStudents();
+        await fetchPendingRegistrations();
+        setShowApprovalModal(false);
+        setSelectedStudent(null);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Reject student registration
+  const handleRejectStudent = async (userId, rejectionReason) => {
+    try {
+      const response = await api.post(`/student-approvals/reject/${userId}`, {
+        rejection_reason: rejectionReason
+      });
+      if (response.data.success) {
+        // Refresh pending registrations
+        await fetchPendingRegistrations();
+        setShowApprovalModal(false);
+        setSelectedStudent(null);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Open approval modal
+  const openApprovalModal = (student) => {
+    setSelectedStudent(student);
+    setShowApprovalModal(true);
+  };
+
+  // Fetch users with filters
+  const fetchUsers = async (page = 1, filters = userFilters) => {
+    if (!hasPermission('users:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.role && { role: filters.role }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.emailVerified && { email_verified: filters.emailVerified }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/users?${queryParams}`);
+      if (response.data.success) {
+        setUsers(response.data.data.users || []);
+        setUserPagination(response.data.data.pagination || userPagination);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle user filter changes
+  const handleUserFilterChange = (key, value) => {
+    const newFilters = { ...userFilters, [key]: value };
+    setUserFilters(newFilters);
+    fetchUsers(1, newFilters);
+  };
+
+  // Refresh users
+  const refreshUsers = () => {
+    fetchUsers(userPagination.current_page, userFilters);
+  };
+
+  // Load data when menu is active
+  useEffect(() => {
+    if (activeMenu === 'dashboard') {
+      fetchDashboardStats();
+    } else if (activeMenu === 'students') {
+      fetchStudents();
+    } else if (activeMenu === 'student-approvals') {
+      fetchPendingRegistrations();
+    } else if (activeMenu === 'users') {
+      fetchUsers();
+    }
+  }, [activeMenu]);
 
   const recentActivities = [
     { id: 1, action: 'New student enrolled', user: 'John Doe', time: '2 hours ago', type: 'enrollment' },
@@ -119,7 +370,10 @@ const AdminDashboard = ({ activeMenu }) => {
                   Quick Actions
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <button className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-colors">
+                  <button 
+                    onClick={() => setShowCreateUserModal(true)}
+                    className="p-3 bg-brand-50 dark:bg-brand-900/20 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-colors"
+                  >
                     <HiUsers className="h-6 w-6 text-brand-600 dark:text-brand-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-brand-900 dark:text-brand-100">
                       Add User
@@ -151,31 +405,191 @@ const AdminDashboard = ({ activeMenu }) => {
 
       case 'users':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-              <button className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors">
-                Add User
-              </button>
-            </div>
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-6 shadow-soft dark:shadow-soft-dark">
-              <p className="text-gray-600 dark:text-gray-400">User management content will be implemented here.</p>
-            </div>
-          </div>
+          <>
+            <UserManagementSection
+              users={users}
+              loading={loading}
+              userPagination={userPagination}
+              userFilters={userFilters}
+              userViewMode={userViewMode}
+              hasPermission={hasPermission}
+              setShowCreateUserModal={setShowCreateUserModal}
+              handleUserFilterChange={handleUserFilterChange}
+              refreshUsers={refreshUsers}
+              fetchUsers={fetchUsers}
+              setUserViewMode={setUserViewMode}
+            />
+            <CreateUserModal 
+              isOpen={showCreateUserModal} 
+              onClose={() => setShowCreateUserModal(false)} 
+            />
+          </>
         );
 
       case 'students':
         return (
+          <>
+            <StudentsSection
+              students={students}
+              loading={loading}
+              pagination={pagination}
+              studentFilters={studentFilters}
+              studentViewMode={studentViewMode}
+              hasPermission={hasPermission}
+              setShowCreateUserModal={setShowCreateUserModal}
+              handleStudentFilterChange={handleStudentFilterChange}
+              refreshStudents={refreshStudents}
+              fetchStudents={fetchStudents}
+              setStudentViewMode={setStudentViewMode}
+            />
+            <CreateUserModal 
+              isOpen={showCreateUserModal} 
+              onClose={() => setShowCreateUserModal(false)} 
+            />
+          </>
+        );
+
+      case 'student-approvals':
+        return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Students</h1>
-              <button className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors">
-                Add Student
-              </button>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Student Approvals</h1>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {pendingRegistrations.length} pending registrations
+              </div>
             </div>
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-6 shadow-soft dark:shadow-soft-dark">
-              <p className="text-gray-600 dark:text-gray-400">Student management content will be implemented here.</p>
+
+            <div className="bg-white dark:bg-dark-800 rounded-xl shadow-soft dark:shadow-soft-dark">
+              {loading ? (
+                <div className="p-6 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">Loading pending registrations...</p>
+                </div>
+              ) : pendingRegistrations.length === 0 ? (
+                <div className="p-6 text-center">
+                  <HiCheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Pending Approvals</h3>
+                  <p className="text-gray-600 dark:text-gray-400">All student registrations have been processed.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+                    <thead className="bg-gray-50 dark:bg-dark-700">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Phone
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Applied Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-dark-700">
+                      {pendingRegistrations.map((registration) => (
+                        <tr key={registration.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900/20 flex items-center justify-center">
+                                  <HiUser className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {registration.profile?.first_name} {registration.profile?.last_name}
+                                </div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  ID: {registration.profile?.national_id || 'Not provided'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {registration.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {registration.profile?.phone || 'Not provided'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {new Date(registration.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                              Pending
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button 
+                                onClick={() => openApprovalModal(registration)}
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                title="Review Registration"
+                              >
+                                <HiEye className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {approvalPagination.total_pages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-dark-700">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700 dark:text-gray-300">
+                      Showing {((approvalPagination.current_page - 1) * approvalPagination.per_page) + 1} to{' '}
+                      {Math.min(approvalPagination.current_page * approvalPagination.per_page, approvalPagination.total)} of{' '}
+                      {approvalPagination.total} results
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => fetchPendingRegistrations(approvalPagination.current_page - 1)}
+                        disabled={approvalPagination.current_page === 1}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-dark-700 border border-gray-300 dark:border-dark-600 rounded-md hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => fetchPendingRegistrations(approvalPagination.current_page + 1)}
+                        disabled={approvalPagination.current_page === approvalPagination.total_pages}
+                        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-dark-700 border border-gray-300 dark:border-dark-600 rounded-md hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Student Approval Modal */}
+            <StudentApprovalModal
+              isOpen={showApprovalModal}
+              onClose={() => {
+                setShowApprovalModal(false);
+                setSelectedStudent(null);
+              }}
+              student={selectedStudent}
+              onApprove={handleApproveStudent}
+              onReject={handleRejectStudent}
+              loading={loading}
+            />
           </div>
         );
 

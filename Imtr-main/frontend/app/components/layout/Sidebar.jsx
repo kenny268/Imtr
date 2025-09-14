@@ -27,7 +27,7 @@ import { cn } from '@/app/lib/utils';
 
 const Sidebar = () => {
   const { user } = useAuth();
-  const { sidebarOpen, sidebarCollapsed, toggleSidebarCollapse, activeMenu, setMenu } = useNavigation();
+  const { sidebarOpen, setSidebarOpen, sidebarCollapsed, toggleSidebarCollapse, activeMenu, setMenu } = useNavigation();
 
   const userRole = user?.role || USER_ROLES.STUDENT;
   const menuItems = MENU_ITEMS[userRole] || MENU_ITEMS[USER_ROLES.STUDENT];
