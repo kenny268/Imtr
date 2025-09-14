@@ -1,16 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 @layer base {
-  * {
-    @apply border-gray-200 dark:border-dark-600;
-  }
-  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-50 dark:bg-dark-900 text-gray-900 dark:text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   

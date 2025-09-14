@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { HiEye, HiEyeOff, HiLockClosed, HiMail } from 'react-icons/hi';
 import { useAuth } from '@/app/lib/auth-context';
 import { useTheme } from '@/app/contexts/ThemeContext';
+import { useUI } from '@/app/contexts/UIContext';
+import AuthGuard from '@/app/components/auth/AuthGuard';
 import { cn } from '@/app/lib/utils';
-import toast from 'react-hot-toast';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ const LoginPage = () => {
   
   const { login } = useAuth();
   const { theme } = useTheme();
+  const { showSuccess, showError, handleApiError } = useUI();
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -35,18 +37,25 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
-      toast.success('Login successful!');
-      router.push('/');
+      await login({
+        email: formData.email,
+        password: formData.password
+      });
+      showSuccess('Login successful!');
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        router.push('/');
+      }, 100);
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <AuthGuard requireAuth={false}>
+      <div className="min-h-screen bg-gray-50 dark:bg-dark-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -198,6 +207,7 @@ const LoginPage = () => {
         </motion.form>
       </motion.div>
     </div>
+    </AuthGuard>
   );
 };
 

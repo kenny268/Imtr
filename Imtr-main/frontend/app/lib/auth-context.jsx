@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
@@ -19,13 +19,40 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
 
-  // Get current user profile
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: (credentials) => api.post('/auth/register', credentials),
+    onSuccess: (response) => {
+      const userData = response.data.data;
+      setUser(userData);
+      router.push('/auth/login');
+    },
+    onError: (error) => {
+      console.error('Register error:', error);
+      toast.error('Registration failed');
+    }
+  });
+
+  // register funtion
+  const register = async (credentials) => {
+    try {
+      await registerMutation.mutateAsync(credentials);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Get current user profile - only fetch if not on auth pages
+  const isAuthPage = pathname?.startsWith('/auth/') || pathname?.startsWith('/access-denied') || pathname?.startsWith('/not-found');
+  
   const { data: userData, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ['user-profile'],
     queryFn: () => api.get('/auth/me').then(res => res.data.data),
-    retry: false
+    retry: false,
+    enabled: !isAuthPage
   });
 
   // Handle user data changes
@@ -36,8 +63,11 @@ export const AuthProvider = ({ children }) => {
     } else if (userError) {
       setUser(null);
       setLoading(false);
+    } else if (isAuthPage) {
+      // On auth pages, don't wait for API call
+      setLoading(false);
     }
-  }, [userData, userError]);
+  }, [userData, userError, isAuthPage]);
 
   // Login mutation
   const loginMutation = useMutation({
@@ -46,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       const userData = response.data.data;
       setUser(userData);
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      router.push('/dashboard');
+      // Don't redirect here - let the page handle it
     },
     onError: (error) => {
       console.error('Login error:', error);
@@ -59,14 +89,14 @@ export const AuthProvider = ({ children }) => {
     onSuccess: () => {
       setUser(null);
       queryClient.clear();
-      router.push('/login');
+      router.push('/auth/login');
     },
     onError: (error) => {
       console.error('Logout error:', error);
       // Force logout even if API call fails
       setUser(null);
       queryClient.clear();
-      router.push('/login');
+      router.push('/auth/login');
     }
   });
 
@@ -87,12 +117,54 @@ export const AuthProvider = ({ children }) => {
       // Force logout even if API call fails
       setUser(null);
       queryClient.clear();
-      router.push('/login');
+      router.push('/auth/login');
     }
   };
 
   // Check if user is authenticated
   const isAuthenticated = !!user;
+
+  // Create user mutation (admin only)
+  const createUserMutation = useMutation({
+    mutationFn: (userData) => api.post('/auth/admin/create-user', userData),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (error) => {
+      console.error('Create user error:', error);
+    }
+  });
+
+  // Create user function
+  const createUser = async (userData) => {
+    try {
+      await createUserMutation.mutateAsync(userData);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Complete profile mutation
+  const completeProfileMutation = useMutation({
+    mutationFn: (profileData) => api.put('/auth/complete-profile', profileData),
+    onSuccess: (response) => {
+      const userData = response.data.data;
+      setUser(userData);
+      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+    },
+    onError: (error) => {
+      console.error('Complete profile error:', error);
+    }
+  });
+
+  // Complete profile function
+  const completeProfile = async (profileData) => {
+    try {
+      await completeProfileMutation.mutateAsync(profileData);
+    } catch (error) {
+      throw error;
+    }
+  };
 
   // Check if user has specific role
   const hasRole = (role) => {
@@ -164,7 +236,7 @@ export const AuthProvider = ({ children }) => {
   // Redirect to login if not authenticated
   const requireAuth = () => {
     if (!isAuthenticated && !loading) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   };
 
@@ -179,8 +251,11 @@ export const AuthProvider = ({ children }) => {
     user,
     loading: loading || userLoading,
     isAuthenticated,
+    register,
     login,
     logout,
+    createUser,
+    completeProfile,
     hasRole,
     hasAnyRole,
     getPermissions,
@@ -189,7 +264,9 @@ export const AuthProvider = ({ children }) => {
     requireAuth,
     requireGuest,
     loginLoading: loginMutation.isPending,
-    logoutLoading: logoutMutation.isPending
+    logoutLoading: logoutMutation.isPending,
+    createUserLoading: createUserMutation.isPending,
+    completeProfileLoading: completeProfileMutation.isPending
   };
 
   return (

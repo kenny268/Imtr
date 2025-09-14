@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { HiExclamationTriangle, HiArrowLeft, HiHome, HiSearch } from 'react-icons/hi';
+import { HiExclamationCircle, HiArrowLeft, HiHome, HiSearch } from 'react-icons/hi';
 import { useTheme } from '@/app/contexts/ThemeContext';
 
 const NotFoundPage = () => {
@@ -24,7 +24,7 @@ const NotFoundPage = () => {
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           className="mx-auto h-24 w-24 bg-yellow-100 dark:bg-yellow-900/20 rounded-full flex items-center justify-center mb-6"
         >
-          <HiExclamationTriangle className="h-12 w-12 text-yellow-600 dark:text-yellow-400" />
+          <HiExclamationCircle className="h-12 w-12 text-yellow-600 dark:text-yellow-400" />
         </motion.div>
 
         {/* Content */}
