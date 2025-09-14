@@ -17,15 +17,11 @@ const {
 
 const { validate } = require('../../middleware/validate');
 const { authSchemas } = require('../../middleware/validate');
-const { authenticateToken } = require('../../middleware/auth');
+const { authenticateToken, authorize } = require('../../middleware/auth');
 const { authLimiter, passwordResetLimiter } = require('../../middleware/rateLimiter');
 
-// Public routes
-router.post('/register',
-  authLimiter,
-  validate(authSchemas.register, 'body'),
-  register
-);
+// Public routes - Registration disabled for security
+// router.post('/register', ...) - DISABLED: Only admins can create accounts
 
 router.post('/login', 
   authLimiter,
@@ -59,6 +55,15 @@ router.post('/resend-verification',
   resendVerification
 );
 
+// Admin-only routes
+router.post('/admin/create-user',
+  authenticateToken,
+  authorize('ADMIN'),
+  authLimiter,
+  validate(authSchemas.register, 'body'),
+  register
+);
+
 // Protected routes
 router.get('/me',
   authenticateToken,
@@ -66,6 +71,12 @@ router.get('/me',
 );
 
 router.put('/profile',
+  authenticateToken,
+  validate(authSchemas.updateProfile, 'body'),
+  updateProfile
+);
+
+router.put('/complete-profile',
   authenticateToken,
   validate(authSchemas.updateProfile, 'body'),
   updateProfile

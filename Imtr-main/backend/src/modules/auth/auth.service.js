@@ -18,6 +18,14 @@ class AuthService {
         throw new ConflictError('User with this email already exists');
       }
 
+      // Check admin limit if trying to create admin account
+      if (role === 'ADMIN') {
+        const adminCount = await User.count({ where: { role: 'ADMIN' } });
+        if (adminCount >= 2) {
+          throw new ConflictError('Maximum number of admin accounts (2) has been reached');
+        }
+      }
+
       // Hash password
       const hashedPassword = await hashPassword(password);
 

@@ -34,15 +34,15 @@ const config = {
   // Cookie Configuration
   cookie: {
     secret: process.env.COOKIE_SECRET || 'your-cookie-secret',
-    domain: process.env.COOKIE_DOMAIN || 'localhost',
+    domain: process.env.COOKIE_DOMAIN || '10.192.24.152',
     secure: process.env.COOKIE_SECURE === 'true',
     sameSite: process.env.COOKIE_SAME_SITE || 'strict'
   },
 
   // CORS Configuration
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-    credentials: process.env.CORS_CREDENTIALS === 'true'
+    origin: process.env.CORS_ORIGIN || 'http://10.192.24.152:3000',
+    credentials: process.env.CORS_CREDENTIALS !== 'false'
   },
 
   // Rate Limiting

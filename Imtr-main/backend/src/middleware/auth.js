@@ -64,7 +64,11 @@ const authorize = (...roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    // Flatten roles array if nested
+    const flatRoles = roles.flat();
+    logger.info(`Authorization check: user role=${req.user.role}, allowed roles=${JSON.stringify(flatRoles)}`);
+
+    if (!flatRoles.includes(req.user.role)) {
       logger.warn(`Unauthorized access attempt by user ${req.user.id} with role ${req.user.role}`);
       return res.status(403).json({
         success: false,

@@ -123,13 +123,13 @@ const authSchemas = {
     password: commonSchemas.password,
     role: commonSchemas.role,
     profile: Joi.object({
-      firstName: Joi.string().trim().min(2).max(50).required(),
-      lastName: Joi.string().trim().min(2).max(50).required(),
+      first_name: Joi.string().trim().min(2).max(50).required(),
+      last_name: Joi.string().trim().min(2).max(50).required(),
       phone: commonSchemas.phone,
       gender: commonSchemas.gender,
-      dateOfBirth: commonSchemas.date,
+      date_of_birth: commonSchemas.date,
       address: Joi.string().trim().max(255),
-      nationalId: Joi.string().trim().pattern(/^\d{8}$/).messages({
+      national_id: Joi.string().trim().pattern(/^\d{8}$/).messages({
         'string.pattern.base': 'National ID must be 8 digits'
       })
     }).required()
@@ -160,21 +160,21 @@ const authSchemas = {
   updateProfile: Joi.object({
     email: commonSchemas.email.optional(),
     profile: Joi.object({
-      firstName: Joi.string().trim().min(2).max(50).optional(),
-      lastName: Joi.string().trim().min(2).max(50).optional(),
-      middleName: Joi.string().trim().min(2).max(50).optional(),
+      first_name: Joi.string().trim().min(2).max(50).optional(),
+      last_name: Joi.string().trim().min(2).max(50).optional(),
+      middle_name: Joi.string().trim().min(2).max(50).optional(),
       phone: commonSchemas.phone.optional(),
       gender: commonSchemas.gender.optional(),
-      dateOfBirth: commonSchemas.date.optional(),
+      date_of_birth: commonSchemas.date.optional(),
       address: Joi.string().trim().max(255).optional(),
       city: Joi.string().trim().max(100).optional(),
       county: Joi.string().trim().max(100).optional(),
-      postalCode: Joi.string().trim().max(20).optional(),
-      nationalId: Joi.string().trim().pattern(/^\d{8}$/).optional(),
-      passportNumber: Joi.string().trim().max(50).optional(),
-      emergencyContactName: Joi.string().trim().max(100).optional(),
-      emergencyContactPhone: Joi.string().trim().max(20).optional(),
-      emergencyContactRelationship: Joi.string().trim().max(50).optional(),
+      postal_code: Joi.string().trim().max(20).optional(),
+      national_id: Joi.string().trim().pattern(/^\d{8}$/).optional(),
+      passport_number: Joi.string().trim().max(50).optional(),
+      emergency_contact_name: Joi.string().trim().max(100).optional(),
+      emergency_contact_phone: Joi.string().trim().max(20).optional(),
+      emergency_contact_relationship: Joi.string().trim().max(50).optional(),
       bio: Joi.string().trim().max(500).optional(),
       website: Joi.string().uri().optional(),
       linkedin: Joi.string().uri().optional(),
@@ -191,13 +191,13 @@ const userSchemas = {
     email: commonSchemas.email.optional(),
     status: commonSchemas.status.optional(),
     profile: Joi.object({
-      firstName: Joi.string().trim().min(2).max(50).optional(),
-      lastName: Joi.string().trim().min(2).max(50).optional(),
+      first_name: Joi.string().trim().min(2).max(50).optional(),
+      last_name: Joi.string().trim().min(2).max(50).optional(),
       phone: commonSchemas.phone.optional(),
       gender: commonSchemas.gender.optional(),
-      dateOfBirth: commonSchemas.date.optional(),
+      date_of_birth: commonSchemas.date.optional(),
       address: Joi.string().trim().max(255).optional(),
-      nationalId: Joi.string().trim().pattern(/^\d{8}$/).optional()
+      national_id: Joi.string().trim().pattern(/^\d{8}$/).optional()
     }).optional()
   }),
 
