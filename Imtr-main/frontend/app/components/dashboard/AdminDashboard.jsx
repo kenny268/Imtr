@@ -45,6 +45,7 @@ import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 import ProgramsSection from './ProgramsSection';
 import CoursesSection from './CoursesSection';
+import FacultyDepartmentSection from './FacultyDepartmentSection';
 
 const AdminDashboard = ({ activeMenu }) => {
   const { hasPermission } = useAuth();
@@ -53,6 +54,8 @@ const AdminDashboard = ({ activeMenu }) => {
   const [users, setUsers] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [faculties, setFaculties] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -108,6 +111,18 @@ const AdminDashboard = ({ activeMenu }) => {
     total: 0,
     total_pages: 0
   });
+  const [facultyPagination, setFacultyPagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0
+  });
+  const [departmentPagination, setDepartmentPagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0
+  });
 
   // Advanced filtering and sorting states
   const [studentFilters, setStudentFilters] = useState({
@@ -157,6 +172,28 @@ const AdminDashboard = ({ activeMenu }) => {
     sortOrder: 'DESC'
   });
   const [courseViewMode, setCourseViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Faculty management filters and view mode
+  const [facultyFilters, setFacultyFilters] = useState({
+    search: '',
+    status: '',
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
+  const [facultyViewMode, setFacultyViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Department management filters and view mode
+  const [departmentFilters, setDepartmentFilters] = useState({
+    search: '',
+    faculty_id: '',
+    status: '',
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
+  const [departmentViewMode, setDepartmentViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Faculty & Department management tab state
+  const [facultyDepartmentTab, setFacultyDepartmentTab] = useState('faculties'); // 'faculties' or 'departments'
 
   // Fetch dashboard statistics
   const fetchDashboardStats = async () => {
@@ -310,9 +347,88 @@ const AdminDashboard = ({ activeMenu }) => {
     fetchCourses(1, newFilters);
   };
 
+  // Faculty filter change handler
+  const handleFacultyFilterChange = (key, value) => {
+    const newFilters = { ...facultyFilters, [key]: value };
+    setFacultyFilters(newFilters);
+    fetchFaculties(1, newFilters);
+  };
+
+  // Department filter change handler
+  const handleDepartmentFilterChange = (key, value) => {
+    const newFilters = { ...departmentFilters, [key]: value };
+    setDepartmentFilters(newFilters);
+    fetchDepartments(1, newFilters);
+  };
+
   // Refresh courses
   const refreshCourses = () => {
     fetchCourses(coursePagination.current_page, courseFilters);
+  };
+
+  // Fetch faculties
+  const fetchFaculties = async (page = 1, filters = facultyFilters) => {
+    if (!hasPermission('faculties:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.status && { status: filters.status }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/faculties?${queryParams}`);
+      if (response.data.success) {
+        setFaculties(response.data.data.faculties || []);
+        setFacultyPagination(response.data.data.pagination || facultyPagination);
+      }
+    } catch (error) {
+      console.error('Error fetching faculties:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch departments
+  const fetchDepartments = async (page = 1, filters = departmentFilters) => {
+    if (!hasPermission('departments:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.faculty_id && { faculty_id: filters.faculty_id }),
+        ...(filters.status && { status: filters.status }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/departments?${queryParams}`);
+      if (response.data.success) {
+        setDepartments(response.data.data.departments || []);
+        setDepartmentPagination(response.data.data.pagination || departmentPagination);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh faculties
+  const refreshFaculties = () => {
+    fetchFaculties(facultyPagination.current_page, facultyFilters);
+  };
+
+  // Refresh departments
+  const refreshDepartments = () => {
+    fetchDepartments(departmentPagination.current_page, departmentFilters);
   };
 
   // Fetch pending registrations
@@ -427,6 +543,9 @@ const AdminDashboard = ({ activeMenu }) => {
       fetchPrograms();
     } else if (activeMenu === 'courses') {
       fetchCourses();
+    } else if (activeMenu === 'faculty-departments') {
+      fetchFaculties();
+      fetchDepartments();
     }
   }, [activeMenu]);
 
@@ -683,6 +802,39 @@ const AdminDashboard = ({ activeMenu }) => {
               }}
             />
           </>
+        );
+
+      case 'faculty-departments':
+        return (
+          <FacultyDepartmentSection
+            activeTab={facultyDepartmentTab}
+            setActiveTab={setFacultyDepartmentTab}
+            faculties={faculties}
+            departments={departments}
+            loading={loading}
+            facultyPagination={facultyPagination}
+            departmentPagination={departmentPagination}
+            facultyFilters={facultyFilters}
+            departmentFilters={departmentFilters}
+            facultyViewMode={facultyViewMode}
+            departmentViewMode={departmentViewMode}
+            hasPermission={hasPermission}
+            setShowCreateFacultyModal={() => {}} // TODO: Add faculty modals
+            setShowCreateDepartmentModal={() => {}} // TODO: Add department modals
+            setShowViewModal={setShowViewModal}
+            setShowEditModal={setShowEditModal}
+            setShowDeleteModal={setShowDeleteModal}
+            setSelectedFaculty={setSelectedUser} // Reuse user modal for now
+            setSelectedDepartment={setSelectedUser} // Reuse user modal for now
+            handleFacultyFilterChange={handleFacultyFilterChange}
+            handleDepartmentFilterChange={handleDepartmentFilterChange}
+            refreshFaculties={refreshFaculties}
+            refreshDepartments={refreshDepartments}
+            fetchFaculties={fetchFaculties}
+            fetchDepartments={fetchDepartments}
+            setFacultyViewMode={setFacultyViewMode}
+            setDepartmentViewMode={setDepartmentViewMode}
+          />
         );
 
       case 'students':
