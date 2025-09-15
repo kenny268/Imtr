@@ -36,8 +36,12 @@ import StudentApprovalModal from '@/app/components/modals/StudentApprovalModal';
 import ViewUserModal from '@/app/components/modals/ViewUserModal';
 import EditUserModal from '@/app/components/modals/EditUserModal';
 import DeleteUserModal from '@/app/components/modals/DeleteUserModal';
+import CreateProgramModal from '@/app/components/modals/CreateProgramModal';
+import CreateCourseModal from '@/app/components/modals/CreateCourseModal';
 import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
+import ProgramsSection from './ProgramsSection';
+import CoursesSection from './CoursesSection';
 
 const AdminDashboard = ({ activeMenu }) => {
   const { hasPermission } = useAuth();
@@ -54,6 +58,12 @@ const AdminDashboard = ({ activeMenu }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  
+  // Modal states for programs and courses
+  const [showCreateProgramModal, setShowCreateProgramModal] = useState(false);
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
     totalStudents: 0,
     totalLecturers: 0,
@@ -428,9 +438,53 @@ const AdminDashboard = ({ activeMenu }) => {
               fetchUsers={fetchUsers}
               setUserViewMode={setUserViewMode}
             />
-            <CreateUserModal 
-              isOpen={showCreateUserModal} 
-              onClose={() => setShowCreateUserModal(false)} 
+            <CreateUserModal
+              isOpen={showCreateUserModal}
+              onClose={() => setShowCreateUserModal(false)}
+            />
+          </>
+        );
+
+      case 'programs':
+        return (
+          <>
+            <ProgramsSection
+              hasPermission={hasPermission}
+              setShowCreateProgramModal={setShowCreateProgramModal}
+              setShowViewModal={setShowViewModal}
+              setShowEditModal={setShowEditModal}
+              setShowDeleteModal={setShowDeleteModal}
+              setSelectedProgram={setSelectedProgram}
+            />
+            <CreateProgramModal
+              isOpen={showCreateProgramModal}
+              onClose={() => setShowCreateProgramModal(false)}
+              onSuccess={() => {
+                // Refresh programs list if needed
+                console.log('Program created successfully');
+              }}
+            />
+          </>
+        );
+
+      case 'courses':
+        return (
+          <>
+            <CoursesSection
+              hasPermission={hasPermission}
+              setShowCreateCourseModal={setShowCreateCourseModal}
+              setShowViewModal={setShowViewModal}
+              setShowEditModal={setShowEditModal}
+              setShowDeleteModal={setShowDeleteModal}
+              setSelectedCourse={setSelectedCourse}
+            />
+            <CreateCourseModal
+              isOpen={showCreateCourseModal}
+              onClose={() => setShowCreateCourseModal(false)}
+              onSuccess={() => {
+                // Refresh courses list if needed
+                console.log('Course created successfully');
+              }}
             />
           </>
         );

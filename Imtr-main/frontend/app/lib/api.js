@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://10.192.24.152:4000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://192.168.88.243:4000/api/v1',
   timeout: 10000,
   withCredentials: true, // Important for cookies
   headers: {
