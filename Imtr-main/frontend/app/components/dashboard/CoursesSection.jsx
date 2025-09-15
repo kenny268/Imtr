@@ -22,35 +22,24 @@ import { useUI } from '@/app/contexts/UIContext';
 import { api } from '@/app/lib/api';
 
 const CoursesSection = ({ 
+  courses,
+  loading,
+  pagination,
+  courseFilters,
+  courseViewMode,
   hasPermission, 
   setShowCreateCourseModal,
   setShowViewModal,
   setShowEditModal,
   setShowDeleteModal,
-  setSelectedCourse
+  setSelectedCourse,
+  handleCourseFilterChange,
+  refreshCourses,
+  fetchCourses,
+  setCourseViewMode
 }) => {
   const { showError, showSuccess } = useUI();
-  const [courses, setCourses] = useState([]);
   const [programs, setPrograms] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 20,
-    total: 0,
-    total_pages: 0
-  });
-  const [filters, setFilters] = useState({
-    search: '',
-    program_id: '',
-    semester: '',
-    year: '',
-    course_type: '',
-    status: '',
-    is_offered: '',
-    sortBy: 'created_at',
-    sortOrder: 'DESC'
-  });
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
 
   // Fetch programs for filter dropdown
   const fetchPrograms = async () => {
@@ -64,49 +53,9 @@ const CoursesSection = ({
     }
   };
 
-  // Fetch courses
-  const fetchCourses = async (page = 1, newFilters = filters) => {
-    if (!hasPermission('courses:read')) return;
-    
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '20',
-        ...(newFilters.search && { search: newFilters.search }),
-        ...(newFilters.program_id && { program_id: newFilters.program_id }),
-        ...(newFilters.semester && { semester: newFilters.semester }),
-        ...(newFilters.year && { year: newFilters.year }),
-        ...(newFilters.course_type && { course_type: newFilters.course_type }),
-        ...(newFilters.status && { status: newFilters.status }),
-        ...(newFilters.is_offered !== '' && { is_offered: newFilters.is_offered }),
-        sortBy: newFilters.sortBy,
-        sortOrder: newFilters.sortOrder
-      });
-
-      const response = await api.get(`/courses?${queryParams}`);
-      if (response.data.success) {
-        setCourses(response.data.data.courses || []);
-        setPagination(response.data.data.pagination || pagination);
-      }
-    } catch (error) {
-      console.error('Failed to fetch courses:', error);
-      showError('Failed to fetch courses');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle filter changes
+  // Use the passed handlers
   const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    fetchCourses(1, newFilters);
-  };
-
-  // Refresh courses
-  const refreshCourses = () => {
-    fetchCourses(pagination.current_page, filters);
+    handleCourseFilterChange(key, value);
   };
 
   // Action handlers
@@ -151,7 +100,6 @@ const CoursesSection = ({
 
   useEffect(() => {
     fetchPrograms();
-    fetchCourses();
   }, []);
 
   return (
@@ -192,7 +140,7 @@ const CoursesSection = ({
               <input
                 type="text"
                 placeholder="Search courses..."
-                value={filters.search}
+                value={courseFilters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
               />
@@ -203,7 +151,7 @@ const CoursesSection = ({
           <div className="flex flex-wrap items-center space-x-4">
             {/* Program Filter */}
             <select
-              value={filters.program_id}
+              value={courseFilters.program_id}
               onChange={(e) => handleFilterChange('program_id', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -217,7 +165,7 @@ const CoursesSection = ({
 
             {/* Year Filter */}
             <select
-              value={filters.year}
+              value={courseFilters.year}
               onChange={(e) => handleFilterChange('year', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -230,7 +178,7 @@ const CoursesSection = ({
 
             {/* Semester Filter */}
             <select
-              value={filters.semester}
+              value={courseFilters.semester}
               onChange={(e) => handleFilterChange('semester', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -247,7 +195,7 @@ const CoursesSection = ({
 
             {/* Course Type Filter */}
             <select
-              value={filters.course_type}
+              value={courseFilters.course_type}
               onChange={(e) => handleFilterChange('course_type', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -260,7 +208,7 @@ const CoursesSection = ({
 
             {/* Status Filter */}
             <select
-              value={filters.status}
+              value={courseFilters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -272,7 +220,7 @@ const CoursesSection = ({
 
             {/* Offered Filter */}
             <select
-              value={filters.is_offered}
+              value={courseFilters.is_offered}
               onChange={(e) => handleFilterChange('is_offered', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -283,7 +231,7 @@ const CoursesSection = ({
 
             {/* Sort By */}
             <select
-              value={filters.sortBy}
+              value={courseFilters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -298,7 +246,7 @@ const CoursesSection = ({
 
             {/* Sort Order */}
             <select
-              value={filters.sortOrder}
+              value={courseFilters.sortOrder}
               onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -309,15 +257,15 @@ const CoursesSection = ({
             {/* View Mode Toggle */}
             <div className="flex border border-gray-300 dark:border-dark-600 rounded-lg">
               <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 ${viewMode === 'table' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                onClick={() => setCourseViewMode('table')}
+                className={`p-2 ${courseViewMode === 'table' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 title="Table View"
               >
                 <HiViewList className="h-5 w-5" />
               </button>
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                onClick={() => setCourseViewMode('grid')}
+                className={`p-2 ${courseViewMode === 'grid' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 title="Grid View"
               >
                 <HiViewGrid className="h-5 w-5" />
@@ -338,7 +286,7 @@ const CoursesSection = ({
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No courses found</h3>
           <p className="text-gray-600 dark:text-gray-400">Get started by creating your first course.</p>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : courseViewMode === 'table' ? (
         <div className="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-gray-200 dark:border-dark-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">

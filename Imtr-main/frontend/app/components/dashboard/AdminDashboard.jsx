@@ -38,6 +38,9 @@ import EditUserModal from '@/app/components/modals/EditUserModal';
 import DeleteUserModal from '@/app/components/modals/DeleteUserModal';
 import CreateProgramModal from '@/app/components/modals/CreateProgramModal';
 import CreateCourseModal from '@/app/components/modals/CreateCourseModal';
+import ViewProgramModal from '@/app/components/modals/ViewProgramModal';
+import EditProgramModal from '@/app/components/modals/EditProgramModal';
+import DeleteProgramModal from '@/app/components/modals/DeleteProgramModal';
 import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 import ProgramsSection from './ProgramsSection';
@@ -48,6 +51,8 @@ const AdminDashboard = ({ activeMenu }) => {
   const [students, setStudents] = useState([]);
   const [pendingRegistrations, setPendingRegistrations] = useState([]);
   const [users, setUsers] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -62,6 +67,9 @@ const AdminDashboard = ({ activeMenu }) => {
   // Modal states for programs and courses
   const [showCreateProgramModal, setShowCreateProgramModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [showViewProgramModal, setShowViewProgramModal] = useState(false);
+  const [showEditProgramModal, setShowEditProgramModal] = useState(false);
+  const [showDeleteProgramModal, setShowDeleteProgramModal] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
@@ -88,6 +96,18 @@ const AdminDashboard = ({ activeMenu }) => {
     total: 0,
     total_pages: 0
   });
+  const [programPagination, setProgramPagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0
+  });
+  const [coursePagination, setCoursePagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0
+  });
 
   // Advanced filtering and sorting states
   const [studentFilters, setStudentFilters] = useState({
@@ -111,6 +131,32 @@ const AdminDashboard = ({ activeMenu }) => {
     sortOrder: 'desc'
   });
   const [userViewMode, setUserViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Program management filters and view mode
+  const [programFilters, setProgramFilters] = useState({
+    search: '',
+    level: '',
+    status: '',
+    department: '',
+    faculty: '',
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
+  const [programViewMode, setProgramViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Course management filters and view mode
+  const [courseFilters, setCourseFilters] = useState({
+    search: '',
+    program_id: '',
+    semester: '',
+    year: '',
+    course_type: '',
+    status: '',
+    is_offered: '',
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
+  const [courseViewMode, setCourseViewMode] = useState('table'); // 'table' or 'grid'
 
   // Fetch dashboard statistics
   const fetchDashboardStats = async () => {
@@ -181,6 +227,92 @@ const AdminDashboard = ({ activeMenu }) => {
   // Refresh students
   const refreshStudents = () => {
     fetchStudents(pagination.current_page, studentFilters);
+  };
+
+  // Fetch programs
+  const fetchPrograms = async (page = 1, filters = programFilters) => {
+    if (!hasPermission('programs:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.level && { level: filters.level }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.department && { department: filters.department }),
+        ...(filters.faculty && { faculty: filters.faculty }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/programs?${queryParams}`);
+      if (response.data.success) {
+        setPrograms(response.data.data.programs || []);
+        setProgramPagination(response.data.data.pagination || programPagination);
+      }
+    } catch (error) {
+      console.error('Failed to fetch programs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle program filter changes
+  const handleProgramFilterChange = (key, value) => {
+    const newFilters = { ...programFilters, [key]: value };
+    setProgramFilters(newFilters);
+    fetchPrograms(1, newFilters);
+  };
+
+  // Refresh programs
+  const refreshPrograms = () => {
+    fetchPrograms(programPagination.current_page, programFilters);
+  };
+
+  // Fetch courses
+  const fetchCourses = async (page = 1, filters = courseFilters) => {
+    if (!hasPermission('courses:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.program_id && { program_id: filters.program_id }),
+        ...(filters.semester && { semester: filters.semester }),
+        ...(filters.year && { year: filters.year }),
+        ...(filters.course_type && { course_type: filters.course_type }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.is_offered !== '' && { is_offered: filters.is_offered }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/courses?${queryParams}`);
+      if (response.data.success) {
+        setCourses(response.data.data.courses || []);
+        setCoursePagination(response.data.data.pagination || coursePagination);
+      }
+    } catch (error) {
+      console.error('Failed to fetch courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle course filter changes
+  const handleCourseFilterChange = (key, value) => {
+    const newFilters = { ...courseFilters, [key]: value };
+    setCourseFilters(newFilters);
+    fetchCourses(1, newFilters);
+  };
+
+  // Refresh courses
+  const refreshCourses = () => {
+    fetchCourses(coursePagination.current_page, courseFilters);
   };
 
   // Fetch pending registrations
@@ -291,6 +423,10 @@ const AdminDashboard = ({ activeMenu }) => {
       fetchPendingRegistrations();
     } else if (activeMenu === 'users') {
       fetchUsers();
+    } else if (activeMenu === 'programs') {
+      fetchPrograms();
+    } else if (activeMenu === 'courses') {
+      fetchCourses();
     }
   }, [activeMenu]);
 
@@ -449,19 +585,70 @@ const AdminDashboard = ({ activeMenu }) => {
         return (
           <>
             <ProgramsSection
+              programs={programs}
+              loading={loading}
+              pagination={programPagination}
+              programFilters={programFilters}
+              programViewMode={programViewMode}
               hasPermission={hasPermission}
               setShowCreateProgramModal={setShowCreateProgramModal}
-              setShowViewModal={setShowViewModal}
-              setShowEditModal={setShowEditModal}
-              setShowDeleteModal={setShowDeleteModal}
+              setShowViewModal={setShowViewProgramModal}
+              setShowEditModal={setShowEditProgramModal}
+              setShowDeleteModal={setShowDeleteProgramModal}
               setSelectedProgram={setSelectedProgram}
+              handleProgramFilterChange={handleProgramFilterChange}
+              refreshPrograms={refreshPrograms}
+              fetchPrograms={fetchPrograms}
+              setProgramViewMode={setProgramViewMode}
             />
             <CreateProgramModal
               isOpen={showCreateProgramModal}
               onClose={() => setShowCreateProgramModal(false)}
               onSuccess={() => {
-                // Refresh programs list if needed
-                console.log('Program created successfully');
+                refreshPrograms();
+                setShowCreateProgramModal(false);
+              }}
+            />
+            <ViewProgramModal
+              isOpen={showViewProgramModal}
+              onClose={() => {
+                setShowViewProgramModal(false);
+                setSelectedProgram(null);
+              }}
+              program={selectedProgram}
+            />
+            <EditProgramModal
+              isOpen={showEditProgramModal}
+              onClose={() => {
+                setShowEditProgramModal(false);
+                setSelectedProgram(null);
+              }}
+              program={selectedProgram}
+              onSave={async (programData) => {
+                try {
+                  await refreshPrograms();
+                  setShowEditProgramModal(false);
+                  setSelectedProgram(null);
+                } catch (error) {
+                  console.error('Failed to refresh programs:', error);
+                }
+              }}
+            />
+            <DeleteProgramModal
+              isOpen={showDeleteProgramModal}
+              onClose={() => {
+                setShowDeleteProgramModal(false);
+                setSelectedProgram(null);
+              }}
+              program={selectedProgram}
+              onDelete={async (program) => {
+                try {
+                  await refreshPrograms();
+                  setShowDeleteProgramModal(false);
+                  setSelectedProgram(null);
+                } catch (error) {
+                  console.error('Failed to refresh programs:', error);
+                }
               }}
             />
           </>
@@ -471,19 +658,28 @@ const AdminDashboard = ({ activeMenu }) => {
         return (
           <>
             <CoursesSection
+              courses={courses}
+              loading={loading}
+              pagination={coursePagination}
+              courseFilters={courseFilters}
+              courseViewMode={courseViewMode}
               hasPermission={hasPermission}
               setShowCreateCourseModal={setShowCreateCourseModal}
               setShowViewModal={setShowViewModal}
               setShowEditModal={setShowEditModal}
               setShowDeleteModal={setShowDeleteModal}
               setSelectedCourse={setSelectedCourse}
+              handleCourseFilterChange={handleCourseFilterChange}
+              refreshCourses={refreshCourses}
+              fetchCourses={fetchCourses}
+              setCourseViewMode={setCourseViewMode}
             />
             <CreateCourseModal
               isOpen={showCreateCourseModal}
               onClose={() => setShowCreateCourseModal(false)}
               onSuccess={() => {
-                // Refresh courses list if needed
-                console.log('Course created successfully');
+                refreshCourses();
+                setShowCreateCourseModal(false);
               }}
             />
           </>

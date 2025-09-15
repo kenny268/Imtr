@@ -21,74 +21,27 @@ import { useUI } from '@/app/contexts/UIContext';
 import { api } from '@/app/lib/api';
 
 const ProgramsSection = ({ 
+  programs,
+  loading,
+  pagination,
+  programFilters,
+  programViewMode,
   hasPermission, 
   setShowCreateProgramModal,
   setShowViewModal,
   setShowEditModal,
   setShowDeleteModal,
-  setSelectedProgram
+  setSelectedProgram,
+  handleProgramFilterChange,
+  refreshPrograms,
+  fetchPrograms,
+  setProgramViewMode
 }) => {
   const { showError, showSuccess } = useUI();
-  const [programs, setPrograms] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 20,
-    total: 0,
-    total_pages: 0
-  });
-  const [filters, setFilters] = useState({
-    search: '',
-    level: '',
-    status: '',
-    department: '',
-    faculty: '',
-    sortBy: 'created_at',
-    sortOrder: 'DESC'
-  });
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
 
-  // Fetch programs
-  const fetchPrograms = async (page = 1, newFilters = filters) => {
-    if (!hasPermission('programs:read')) return;
-    
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '20',
-        ...(newFilters.search && { search: newFilters.search }),
-        ...(newFilters.level && { level: newFilters.level }),
-        ...(newFilters.status && { status: newFilters.status }),
-        ...(newFilters.department && { department: newFilters.department }),
-        ...(newFilters.faculty && { faculty: newFilters.faculty }),
-        sortBy: newFilters.sortBy,
-        sortOrder: newFilters.sortOrder
-      });
-
-      const response = await api.get(`/programs?${queryParams}`);
-      if (response.data.success) {
-        setPrograms(response.data.data.programs || []);
-        setPagination(response.data.data.pagination || pagination);
-      }
-    } catch (error) {
-      console.error('Failed to fetch programs:', error);
-      showError('Failed to fetch programs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle filter changes
+  // Use the passed handlers
   const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    fetchPrograms(1, newFilters);
-  };
-
-  // Refresh programs
-  const refreshPrograms = () => {
-    fetchPrograms(pagination.current_page, filters);
+    handleProgramFilterChange(key, value);
   };
 
   // Action handlers
@@ -137,9 +90,6 @@ const ProgramsSection = ({
     }).format(amount || 0);
   };
 
-  useEffect(() => {
-    fetchPrograms();
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -179,7 +129,7 @@ const ProgramsSection = ({
               <input
                 type="text"
                 placeholder="Search programs..."
-                value={filters.search}
+                value={programFilters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
               />
@@ -190,7 +140,7 @@ const ProgramsSection = ({
           <div className="flex flex-wrap items-center space-x-4">
             {/* Level Filter */}
             <select
-              value={filters.level}
+              value={programFilters.level}
               onChange={(e) => handleFilterChange('level', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -205,7 +155,7 @@ const ProgramsSection = ({
 
             {/* Status Filter */}
             <select
-              value={filters.status}
+              value={programFilters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -218,7 +168,7 @@ const ProgramsSection = ({
 
             {/* Sort By */}
             <select
-              value={filters.sortBy}
+              value={programFilters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -231,7 +181,7 @@ const ProgramsSection = ({
 
             {/* Sort Order */}
             <select
-              value={filters.sortOrder}
+              value={programFilters.sortOrder}
               onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
             >
@@ -242,15 +192,15 @@ const ProgramsSection = ({
             {/* View Mode Toggle */}
             <div className="flex border border-gray-300 dark:border-dark-600 rounded-lg">
               <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 ${viewMode === 'table' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                onClick={() => setProgramViewMode('table')}
+                className={`p-2 ${programViewMode === 'table' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 title="Table View"
               >
                 <HiViewList className="h-5 w-5" />
               </button>
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                onClick={() => setProgramViewMode('grid')}
+                className={`p-2 ${programViewMode === 'grid' ? 'bg-brand-600 text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                 title="Grid View"
               >
                 <HiViewGrid className="h-5 w-5" />
@@ -271,7 +221,7 @@ const ProgramsSection = ({
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No programs found</h3>
           <p className="text-gray-600 dark:text-gray-400">Get started by creating your first program.</p>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : programViewMode === 'table' ? (
         <div className="bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-gray-200 dark:border-dark-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
