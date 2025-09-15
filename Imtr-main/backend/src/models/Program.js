@@ -20,6 +20,18 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'program_id',
         as: 'feeStructures'
       });
+
+      // Program belongs to Faculty
+      Program.belongsTo(models.Faculty, {
+        foreignKey: 'faculty_id',
+        as: 'faculty'
+      });
+
+      // Program belongs to Department
+      Program.belongsTo(models.Department, {
+        foreignKey: 'department_id',
+        as: 'department'
+      });
     }
   }
 
@@ -78,13 +90,25 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 18
     },
-    department: {
-      type: DataTypes.STRING(100),
-      allowNull: true
+    faculty_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'faculties',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL'
     },
-    faculty: {
-      type: DataTypes.STRING(100),
-      allowNull: true
+    department_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'departments',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL'
     },
     coordinator_id: {
       type: DataTypes.INTEGER,
@@ -206,10 +230,10 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['status']
       },
       {
-        fields: ['department']
+        fields: ['faculty_id']
       },
       {
-        fields: ['faculty']
+        fields: ['department_id']
       },
       {
         fields: ['coordinator_id']

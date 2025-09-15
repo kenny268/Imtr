@@ -42,8 +42,8 @@ const programSchemas = {
       }),
     min_credits_per_semester: Joi.number().integer().min(1).max(50).default(12),
     max_credits_per_semester: Joi.number().integer().min(1).max(50).default(18),
-    department: Joi.string().trim().max(100).optional(),
-    faculty: Joi.string().trim().max(100).optional(),
+    faculty_id: Joi.number().integer().positive().optional(),
+    department_id: Joi.number().integer().positive().optional(),
     coordinator_id: Joi.number().integer().positive().optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').default('active'),
     accreditation_body: Joi.string().trim().max(255).optional(),
@@ -75,8 +75,8 @@ const programSchemas = {
     total_credits: Joi.number().integer().min(1).max(200).optional(),
     min_credits_per_semester: Joi.number().integer().min(1).max(50).optional(),
     max_credits_per_semester: Joi.number().integer().min(1).max(50).optional(),
-    department: Joi.string().trim().max(100).optional(),
-    faculty: Joi.string().trim().max(100).optional(),
+    faculty_id: Joi.number().integer().positive().optional(),
+    department_id: Joi.number().integer().positive().optional(),
     coordinator_id: Joi.number().integer().positive().optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').optional(),
     accreditation_body: Joi.string().trim().max(255).optional(),
@@ -103,8 +103,8 @@ const programSchemas = {
     ...commonSchemas.pagination,
     level: Joi.string().valid('certificate', 'diploma', 'bachelor', 'master', 'phd', 'postdoc').optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').optional(),
-    department: Joi.string().trim().max(100).optional(),
-    faculty: Joi.string().trim().max(100).optional()
+    faculty_id: Joi.number().integer().positive().optional(),
+    department_id: Joi.number().integer().positive().optional()
   }),
 
   getById: Joi.object({

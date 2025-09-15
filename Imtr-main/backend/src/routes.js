@@ -9,6 +9,8 @@ const studentApprovalRoutes = require('./modules/students/student-approval.route
 const studentOnboardingRoutes = require('./modules/students/student-onboarding.routes');
 const programRoutes = require('./modules/programs/program.routes');
 const courseRoutes = require('./modules/courses/course.routes');
+const facultyRoutes = require('./modules/faculties/faculty.routes');
+const departmentRoutes = require('./modules/departments/department.routes');
 const academicRoutes = require('./modules/academics/academic.routes');
 const financeRoutes = require('./modules/finance/finance.routes');
 const libraryRoutes = require('./modules/library/library.routes');
@@ -24,6 +26,8 @@ router.use('/student-approvals', studentApprovalRoutes);
 router.use('/student-onboarding', studentOnboardingRoutes);
 router.use('/programs', programRoutes);
 router.use('/courses', courseRoutes);
+router.use('/faculties', facultyRoutes);
+router.use('/departments', departmentRoutes);
 router.use('/academics', academicRoutes);
 router.use('/finance', financeRoutes);
 router.use('/library', libraryRoutes);

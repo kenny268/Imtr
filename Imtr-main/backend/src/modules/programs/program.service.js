@@ -1,4 +1,4 @@
-const { Program, Lecturer, Student, Course } = require('../../models');
+const { Program, Lecturer, Student, Course, Faculty, Department } = require('../../models');
 const { Op } = require('sequelize');
 const { NotFoundError, ConflictError, AppError } = require('../../middleware/errorHandler');
 
@@ -13,6 +13,22 @@ class ProgramService {
 
       if (existingProgram) {
         throw new ConflictError('Program code already exists');
+      }
+
+      // Check if faculty exists if provided
+      if (programData.faculty_id) {
+        const faculty = await Faculty.findByPk(programData.faculty_id);
+        if (!faculty) {
+          throw new AppError('Invalid faculty ID', 400);
+        }
+      }
+
+      // Check if department exists if provided
+      if (programData.department_id) {
+        const department = await Department.findByPk(programData.department_id);
+        if (!department) {
+          throw new AppError('Invalid department ID', 400);
+        }
       }
 
       // Validate coordinator if provided
@@ -65,16 +81,26 @@ class ProgramService {
     }
 
     if (department) {
-      whereClause.department = { [Op.iLike]: `%${department}%` };
+      whereClause.department_id = department;
     }
 
     if (faculty) {
-      whereClause.faculty = { [Op.iLike]: `%${faculty}%` };
+      whereClause.faculty_id = faculty;
     }
 
     const { count, rows: programs } = await Program.findAndCountAll({
       where: whereClause,
       include: [
+        {
+          model: Faculty,
+          as: 'faculty',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name', 'code']
+        },
         {
           model: Lecturer,
           as: 'coordinator',

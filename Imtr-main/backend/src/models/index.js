@@ -6,6 +6,8 @@ const User = require('./User');
 const Profile = require('./Profile');
 const Student = require('./Student');
 const Lecturer = require('./Lecturer');
+const Faculty = require('./Faculty');
+const Department = require('./Department');
 const Program = require('./Program');
 const Course = require('./Course');
 const ClassSection = require('./ClassSection');
@@ -30,6 +32,8 @@ const models = {
   Profile: Profile(sequelize, DataTypes),
   Student: Student(sequelize, DataTypes),
   Lecturer: Lecturer(sequelize, DataTypes),
+  Faculty: Faculty(sequelize, DataTypes),
+  Department: Department(sequelize, DataTypes),
   Program: Program(sequelize, DataTypes),
   Course: Course(sequelize, DataTypes),
   ClassSection: ClassSection(sequelize, DataTypes),
