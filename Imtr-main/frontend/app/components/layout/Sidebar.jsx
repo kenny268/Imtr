@@ -18,7 +18,8 @@ import {
   HiDocumentText,
   HiCloud,
   HiChevronLeft,
-  HiChevronRight
+  HiChevronRight,
+  HiOfficeBuilding
 } from 'react-icons/hi';
 import { useAuth } from '@/app/lib/auth-context';
 import { useNavigation } from '@/app/contexts/NavigationContext';
@@ -48,6 +49,7 @@ const Sidebar = () => {
     HiLightBulb,
     HiDocumentText,
     HiCloud,
+    HiOfficeBuilding,
   };
 
   const handleMenuClick = (menuId) => {
