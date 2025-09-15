@@ -1,6 +1,6 @@
 const { Program, Lecturer, Student, Course } = require('../../models');
 const { Op } = require('sequelize');
-const { NotFoundError, ConflictError, BadRequestError } = require('../../utils/errors');
+const { NotFoundError, ConflictError, AppError } = require('../../middleware/errorHandler');
 
 class ProgramService {
   // Create a new program
@@ -19,7 +19,7 @@ class ProgramService {
       if (programData.coordinator_id) {
         const coordinator = await Lecturer.findByPk(programData.coordinator_id);
         if (!coordinator) {
-          throw new BadRequestError('Invalid coordinator ID');
+          throw new AppError('Invalid coordinator ID', 400);
         }
       }
 
@@ -227,7 +227,7 @@ class ProgramService {
     if (updateData.coordinator_id) {
       const coordinator = await Lecturer.findByPk(updateData.coordinator_id);
       if (!coordinator) {
-        throw new BadRequestError('Invalid coordinator ID');
+        throw new AppError('Invalid coordinator ID', 400);
       }
     }
 

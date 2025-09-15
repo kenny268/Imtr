@@ -1,6 +1,6 @@
 const { Course, Program, Lecturer, ClassSection, Enrollment } = require('../../models');
 const { Op } = require('sequelize');
-const { NotFoundError, ConflictError, BadRequestError } = require('../../utils/errors');
+const { NotFoundError, ConflictError, AppError } = require('../../middleware/errorHandler');
 
 class CourseService {
   // Create a new course
@@ -18,7 +18,7 @@ class CourseService {
       // Validate program exists
       const program = await Program.findByPk(courseData.program_id);
       if (!program) {
-        throw new BadRequestError('Invalid program ID');
+        throw new AppError('Invalid program ID', 400);
       }
 
       // Validate prerequisites if provided
@@ -28,7 +28,7 @@ class CourseService {
         });
 
         if (prerequisiteCourses.length !== courseData.prerequisites.length) {
-          throw new BadRequestError('One or more prerequisite courses not found');
+          throw new AppError('One or more prerequisite courses not found', 400);
         }
       }
 
@@ -247,7 +247,7 @@ class CourseService {
     if (updateData.program_id) {
       const program = await Program.findByPk(updateData.program_id);
       if (!program) {
-        throw new BadRequestError('Invalid program ID');
+        throw new AppError('Invalid program ID', 400);
       }
     }
 
