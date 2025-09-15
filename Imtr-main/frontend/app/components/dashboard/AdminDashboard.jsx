@@ -428,25 +428,45 @@ const AdminDashboard = ({ activeMenu }) => {
 
       case 'students':
         return (
-          <>
-            <StudentsSection
-              students={students}
-              loading={loading}
-              pagination={pagination}
-              studentFilters={studentFilters}
-              studentViewMode={studentViewMode}
-              hasPermission={hasPermission}
-              setShowCreateUserModal={setShowCreateUserModal}
-              handleStudentFilterChange={handleStudentFilterChange}
-              refreshStudents={refreshStudents}
-              fetchStudents={fetchStudents}
-              setStudentViewMode={setStudentViewMode}
-            />
-            <CreateUserModal 
-              isOpen={showCreateUserModal} 
-              onClose={() => setShowCreateUserModal(false)} 
-            />
-          </>
+        <>
+          <StudentsSection
+            students={students}
+            loading={loading}
+            pagination={pagination}
+            studentFilters={studentFilters}
+            studentViewMode={studentViewMode}
+            hasPermission={hasPermission}
+            setShowCreateUserModal={setShowCreateUserModal}
+            handleStudentFilterChange={handleStudentFilterChange}
+            refreshStudents={refreshStudents}
+            fetchStudents={fetchStudents}
+            setStudentViewMode={setStudentViewMode}
+            // Approval workflow props
+            pendingRegistrations={pendingRegistrations}
+            approvalPagination={approvalPagination}
+            fetchPendingRegistrations={fetchPendingRegistrations}
+            handleApproveStudent={handleApproveStudent}
+            handleRejectStudent={handleRejectStudent}
+            showApprovalModal={showApprovalModal}
+            setShowApprovalModal={setShowApprovalModal}
+            selectedStudent={selectedStudent}
+            setSelectedStudent={setSelectedStudent}
+          />
+          <CreateUserModal
+            isOpen={showCreateUserModal}
+            onClose={() => setShowCreateUserModal(false)}
+          />
+          <StudentApprovalModal
+            isOpen={showApprovalModal}
+            onClose={() => {
+              setShowApprovalModal(false);
+              setSelectedStudent(null);
+            }}
+            student={selectedStudent}
+            onApprove={handleApproveStudent}
+            onReject={handleRejectStudent}
+          />
+        </>
         );
 
       case 'student-approvals':
