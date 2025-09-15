@@ -37,7 +37,12 @@ const StudentsSection = ({
   showApprovalModal,
   setShowApprovalModal,
   selectedStudent,
-  setSelectedStudent
+  setSelectedStudent,
+  // Modal handlers
+  setShowViewModal,
+  setShowEditModal,
+  setShowDeleteModal,
+  setSelectedUser
 }) => {
   const [activeTab, setActiveTab] = useState('students'); // 'students' or 'approvals'
   // Helper function to format student number
@@ -83,6 +88,30 @@ const StudentsSection = ({
     }
     return 'pending';
   };
+
+  // Action button handlers
+  const handleViewStudent = (student) => {
+    setSelectedUser(student);
+    setShowViewModal(true);
+  };
+
+  const handleEditStudent = (student) => {
+    setSelectedUser(student);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteStudent = (student) => {
+    setSelectedUser(student);
+    setShowDeleteModal(true);
+  };
+
+  const handleApprovalWorkflow = (student) => {
+    setSelectedStudent(student);
+    setShowApprovalModal(true);
+  };
+
+  // Get pending students from the main students list
+  const pendingStudents = students.filter(student => getStudentStatus(student) === 'pending');
 
   return (
     <div className="space-y-6">
@@ -136,7 +165,7 @@ const StudentsSection = ({
             >
               <div className="flex items-center space-x-2">
                 <HiClock className="h-5 w-5" />
-                <span>Pending Approvals ({pendingRegistrations.length})</span>
+                <span>Pending Approvals ({pendingStudents.length})</span>
               </div>
             </button>
           </nav>
@@ -325,17 +354,38 @@ const StudentsSection = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                        <button 
+                          onClick={() => handleViewStudent(student)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          title="View Student"
+                        >
                           <HiEye className="h-4 w-4" />
                         </button>
                         {hasPermission('students:write') && (
-                          <button className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                          <button 
+                            onClick={() => handleEditStudent(student)}
+                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            title="Edit Student"
+                          >
                             <HiPencil className="h-4 w-4" />
                           </button>
                         )}
                         {hasPermission('students:delete') && (
-                          <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                          <button 
+                            onClick={() => handleDeleteStudent(student)}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete Student"
+                          >
                             <HiTrash className="h-4 w-4" />
+                          </button>
+                        )}
+                        {getStudentStatus(student) === 'pending' && hasPermission('students:write') && (
+                          <button 
+                            onClick={() => handleApprovalWorkflow(student)}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                            title="Approve Student"
+                          >
+                            <HiCheckCircle className="h-4 w-4" />
                           </button>
                         )}
                       </div>
@@ -383,12 +433,40 @@ const StudentsSection = ({
                       {getStudentStatus(student)}
                     </span>
                     <div className="flex space-x-1">
-                      <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                      <button 
+                        onClick={() => handleViewStudent(student)}
+                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="View Student"
+                      >
                         <HiEye className="h-4 w-4" />
                       </button>
-                      <button className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                        <HiPencil className="h-4 w-4" />
-                      </button>
+                      {hasPermission('students:write') && (
+                        <button 
+                          onClick={() => handleEditStudent(student)}
+                          className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                          title="Edit Student"
+                        >
+                          <HiPencil className="h-4 w-4" />
+                        </button>
+                      )}
+                      {hasPermission('students:delete') && (
+                        <button 
+                          onClick={() => handleDeleteStudent(student)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          title="Delete Student"
+                        >
+                          <HiTrash className="h-4 w-4" />
+                        </button>
+                      )}
+                      {getStudentStatus(student) === 'pending' && hasPermission('students:write') && (
+                        <button 
+                          onClick={() => handleApprovalWorkflow(student)}
+                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                          title="Approve Student"
+                        >
+                          <HiCheckCircle className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -398,7 +476,7 @@ const StudentsSection = ({
         )
         ) : (
           // Pending Approvals Tab Content
-          pendingRegistrations.length === 0 ? (
+          pendingStudents.length === 0 ? (
             <div className="p-6 text-center">
               <HiClock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No pending approvals</h3>
@@ -413,10 +491,10 @@ const StudentsSection = ({
                       Student
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Email
+                      Student No
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Phone
+                      Program
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Applied Date
@@ -427,8 +505,8 @@ const StudentsSection = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-dark-800 divide-y divide-gray-200 dark:divide-dark-700">
-                  {pendingRegistrations.map((registration) => (
-                    <tr key={registration.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
+                  {pendingStudents.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-dark-700">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -438,40 +516,41 @@ const StudentsSection = ({
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {registration.profile?.first_name} {registration.profile?.last_name}
+                              {student.profile?.first_name} {student.profile?.last_name}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              Pending Approval
+                              {student.email}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {registration.email}
+                        {formatStudentNumber(student)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {registration.profile?.phone || 'Not provided'}
+                        {getProgramName(student)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {registration.created_at ? new Date(registration.created_at).toLocaleDateString() : 'Unknown'}
+                        {student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button 
-                            onClick={() => {
-                              setSelectedStudent(registration);
-                              setShowApprovalModal(true);
-                            }}
+                            onClick={() => handleViewStudent(student)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                            title="View Details"
+                          >
+                            <HiEye className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleApprovalWorkflow(student)}
                             className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                             title="Review & Approve"
                           >
                             <HiCheckCircle className="h-4 w-4" />
                           </button>
                           <button 
-                            onClick={() => {
-                              setSelectedStudent(registration);
-                              setShowApprovalModal(true);
-                            }}
+                            onClick={() => handleApprovalWorkflow(student)}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                             title="Review & Reject"
                           >
@@ -488,47 +567,28 @@ const StudentsSection = ({
         )}
 
         {/* Pagination */}
-        {(activeTab === 'students' ? pagination.total_pages > 1 : approvalPagination.total_pages > 1) && (
+        {activeTab === 'students' && pagination.total_pages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 dark:border-dark-700">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700 dark:text-gray-300">
-                {activeTab === 'students' ? (
-                  <>
-                    Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
-                    {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
-                    {pagination.total} results
-                  </>
-                ) : (
-                  <>
-                    Showing {((approvalPagination.current_page - 1) * approvalPagination.per_page) + 1} to{' '}
-                    {Math.min(approvalPagination.current_page * approvalPagination.per_page, approvalPagination.total)} of{' '}
-                    {approvalPagination.total} results
-                  </>
-                )}
+                Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
+                {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
+                {pagination.total} results
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => {
-                    if (activeTab === 'students') {
-                      fetchStudents(pagination.current_page - 1);
-                    } else {
-                      fetchPendingRegistrations(approvalPagination.current_page - 1);
-                    }
-                  }}
-                  disabled={activeTab === 'students' ? pagination.current_page === 1 : approvalPagination.current_page === 1}
+                  onClick={() => fetchStudents(pagination.current_page - 1)}
+                  disabled={pagination.current_page === 1}
                   className="px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-dark-700 border border-gray-300 dark:border-dark-600 rounded-md hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
+                <span className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+                  Page {pagination.current_page} of {pagination.total_pages}
+                </span>
                 <button
-                  onClick={() => {
-                    if (activeTab === 'students') {
-                      fetchStudents(pagination.current_page + 1);
-                    } else {
-                      fetchPendingRegistrations(approvalPagination.current_page + 1);
-                    }
-                  }}
-                  disabled={activeTab === 'students' ? pagination.current_page === pagination.total_pages : approvalPagination.current_page === approvalPagination.total_pages}
+                  onClick={() => fetchStudents(pagination.current_page + 1)}
+                  disabled={pagination.current_page === pagination.total_pages}
                   className="px-3 py-2 text-sm font-medium text-gray-500 bg-white dark:bg-dark-700 border border-gray-300 dark:border-dark-600 rounded-md hover:bg-gray-50 dark:hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next

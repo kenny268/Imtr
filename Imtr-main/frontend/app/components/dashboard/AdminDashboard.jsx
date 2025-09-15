@@ -33,6 +33,9 @@ import { useAuth } from '@/app/lib/auth-context';
 import { api } from '@/app/lib/api';
 import CreateUserModal from '@/app/components/modals/CreateUserModal';
 import StudentApprovalModal from '@/app/components/modals/StudentApprovalModal';
+import ViewUserModal from '@/app/components/modals/ViewUserModal';
+import EditUserModal from '@/app/components/modals/EditUserModal';
+import DeleteUserModal from '@/app/components/modals/DeleteUserModal';
 import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 
@@ -45,6 +48,12 @@ const AdminDashboard = ({ activeMenu }) => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  
+  // Modal states for user management
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
     totalStudents: 0,
     totalLecturers: 0,
@@ -128,7 +137,7 @@ const AdminDashboard = ({ activeMenu }) => {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: '20',
         role: 'STUDENT', // Filter for students only
         ...(filters.search && { search: filters.search }),
         ...(filters.year && { year: filters.year }),
@@ -451,6 +460,11 @@ const AdminDashboard = ({ activeMenu }) => {
             setShowApprovalModal={setShowApprovalModal}
             selectedStudent={selectedStudent}
             setSelectedStudent={setSelectedStudent}
+            // Modal handlers
+            setShowViewModal={setShowViewModal}
+            setShowEditModal={setShowEditModal}
+            setShowDeleteModal={setShowDeleteModal}
+            setSelectedUser={setSelectedUser}
           />
           <CreateUserModal
             isOpen={showCreateUserModal}
@@ -465,6 +479,58 @@ const AdminDashboard = ({ activeMenu }) => {
             student={selectedStudent}
             onApprove={handleApproveStudent}
             onReject={handleRejectStudent}
+          />
+          <ViewUserModal
+            isOpen={showViewModal}
+            onClose={() => {
+              setShowViewModal(false);
+              setSelectedUser(null);
+            }}
+            user={selectedUser}
+          />
+          <EditUserModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedUser(null);
+            }}
+            user={selectedUser}
+            onSave={async (userData) => {
+              // Handle user update
+              try {
+                const response = await api.put(`/users/${selectedUser.id}`, userData);
+                if (response.data.success) {
+                  // Refresh students list
+                  await fetchStudents();
+                  setShowEditModal(false);
+                  setSelectedUser(null);
+                }
+              } catch (error) {
+                console.error('Failed to update user:', error);
+              }
+            }}
+          />
+          <DeleteUserModal
+            isOpen={showDeleteModal}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setSelectedUser(null);
+            }}
+            user={selectedUser}
+            onDelete={async (user) => {
+              // Handle user deletion
+              try {
+                const response = await api.delete(`/users/${user.id}`);
+                if (response.data.success) {
+                  // Refresh students list
+                  await fetchStudents();
+                  setShowDeleteModal(false);
+                  setSelectedUser(null);
+                }
+              } catch (error) {
+                console.error('Failed to delete user:', error);
+              }
+            }}
           />
         </>
         );
