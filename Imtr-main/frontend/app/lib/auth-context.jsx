@@ -184,6 +184,7 @@ export const AuthProvider = ({ children }) => {
       ADMIN: [
         'users:read', 'users:write', 'users:delete',
         'students:read', 'students:write', 'students:delete',
+        'programs:read', 'programs:write', 'programs:delete',
         'courses:read', 'courses:write', 'courses:delete',
         'finance:read', 'finance:write',
         'reports:read', 'reports:write',
@@ -191,6 +192,7 @@ export const AuthProvider = ({ children }) => {
       ],
       LECTURER: [
         'students:read',
+        'programs:read',
         'courses:read', 'courses:write',
         'attendance:read', 'attendance:write',
         'grades:read', 'grades:write',

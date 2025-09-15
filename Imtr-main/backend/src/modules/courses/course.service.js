@@ -102,7 +102,7 @@ class CourseService {
         {
           model: ClassSection,
           as: 'classSections',
-          attributes: ['id', 'section_name', 'lecturer_id', 'semester', 'academic_year'],
+          attributes: ['id', 'section_code', 'lecturer_id', 'semester', 'academic_year'],
           include: [{
             model: Lecturer,
             as: 'lecturer',
@@ -180,7 +180,7 @@ class CourseService {
         {
           model: ClassSection,
           as: 'classSections',
-          attributes: ['id', 'section_name', 'lecturer_id', 'semester', 'academic_year', 'status'],
+          attributes: ['id', 'section_code', 'lecturer_id', 'semester', 'academic_year', 'status'],
           include: [{
             model: Lecturer,
             as: 'lecturer',
