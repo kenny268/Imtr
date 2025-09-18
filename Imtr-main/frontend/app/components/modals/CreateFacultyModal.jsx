@@ -28,10 +28,20 @@ const CreateFacultyModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await api.get('/users?role=LECTURER&limit=100');
       if (response.data.success) {
-        setLecturers(response.data.data);
+        // Handle different possible response structures
+        const data = response.data.data;
+        if (Array.isArray(data)) {
+          setLecturers(data);
+        } else if (data && Array.isArray(data.users)) {
+          setLecturers(data.users);
+        } else {
+          console.warn('Unexpected API response structure:', data);
+          setLecturers([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching lecturers:', error);
+      setLecturers([]);
     }
   };
 
@@ -157,7 +167,7 @@ const CreateFacultyModal = ({ isOpen, onClose, onSuccess }) => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
               >
                 <option value="">Select Dean (Optional)</option>
-                {lecturers.map((lecturer) => (
+                {Array.isArray(lecturers) && lecturers.map((lecturer) => (
                   <option key={lecturer.id} value={lecturer.id}>
                     {lecturer.profile?.first_name} {lecturer.profile?.last_name} ({lecturer.email})
                   </option>
