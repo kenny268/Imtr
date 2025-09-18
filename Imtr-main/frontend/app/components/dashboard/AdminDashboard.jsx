@@ -41,6 +41,8 @@ import CreateCourseModal from '@/app/components/modals/CreateCourseModal';
 import ViewProgramModal from '@/app/components/modals/ViewProgramModal';
 import EditProgramModal from '@/app/components/modals/EditProgramModal';
 import DeleteProgramModal from '@/app/components/modals/DeleteProgramModal';
+import CreateFacultyModal from '@/app/components/modals/CreateFacultyModal';
+import CreateDepartmentModal from '@/app/components/modals/CreateDepartmentModal';
 import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 import ProgramsSection from './ProgramsSection';
@@ -194,6 +196,18 @@ const AdminDashboard = ({ activeMenu }) => {
 
   // Faculty & Department management tab state
   const [facultyDepartmentTab, setFacultyDepartmentTab] = useState('faculties'); // 'faculties' or 'departments'
+  
+  // Modal states for Faculty & Department management
+  const [showCreateFacultyModal, setShowCreateFacultyModal] = useState(false);
+  const [showCreateDepartmentModal, setShowCreateDepartmentModal] = useState(false);
+  const [showViewFacultyModal, setShowViewFacultyModal] = useState(false);
+  const [showEditFacultyModal, setShowEditFacultyModal] = useState(false);
+  const [showDeleteFacultyModal, setShowDeleteFacultyModal] = useState(false);
+  const [showViewDepartmentModal, setShowViewDepartmentModal] = useState(false);
+  const [showEditDepartmentModal, setShowEditDepartmentModal] = useState(false);
+  const [showDeleteDepartmentModal, setShowDeleteDepartmentModal] = useState(false);
+  const [selectedFaculty, setSelectedFaculty] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   // Fetch dashboard statistics
   const fetchDashboardStats = async () => {
@@ -806,35 +820,53 @@ const AdminDashboard = ({ activeMenu }) => {
 
       case 'faculty-departments':
         return (
-          <FacultyDepartmentSection
-            activeTab={facultyDepartmentTab}
-            setActiveTab={setFacultyDepartmentTab}
-            faculties={faculties}
-            departments={departments}
-            loading={loading}
-            facultyPagination={facultyPagination}
-            departmentPagination={departmentPagination}
-            facultyFilters={facultyFilters}
-            departmentFilters={departmentFilters}
-            facultyViewMode={facultyViewMode}
-            departmentViewMode={departmentViewMode}
-            hasPermission={hasPermission}
-            setShowCreateFacultyModal={() => {}} // TODO: Add faculty modals
-            setShowCreateDepartmentModal={() => {}} // TODO: Add department modals
-            setShowViewModal={setShowViewModal}
-            setShowEditModal={setShowEditModal}
-            setShowDeleteModal={setShowDeleteModal}
-            setSelectedFaculty={setSelectedUser} // Reuse user modal for now
-            setSelectedDepartment={setSelectedUser} // Reuse user modal for now
-            handleFacultyFilterChange={handleFacultyFilterChange}
-            handleDepartmentFilterChange={handleDepartmentFilterChange}
-            refreshFaculties={refreshFaculties}
-            refreshDepartments={refreshDepartments}
-            fetchFaculties={fetchFaculties}
-            fetchDepartments={fetchDepartments}
-            setFacultyViewMode={setFacultyViewMode}
-            setDepartmentViewMode={setDepartmentViewMode}
-          />
+          <>
+            <FacultyDepartmentSection
+              activeTab={facultyDepartmentTab}
+              setActiveTab={setFacultyDepartmentTab}
+              faculties={faculties}
+              departments={departments}
+              loading={loading}
+              facultyPagination={facultyPagination}
+              departmentPagination={departmentPagination}
+              facultyFilters={facultyFilters}
+              departmentFilters={departmentFilters}
+              facultyViewMode={facultyViewMode}
+              departmentViewMode={departmentViewMode}
+              hasPermission={hasPermission}
+              setShowCreateFacultyModal={setShowCreateFacultyModal}
+              setShowCreateDepartmentModal={setShowCreateDepartmentModal}
+              setShowViewModal={setShowViewFacultyModal}
+              setShowEditModal={setShowEditFacultyModal}
+              setShowDeleteModal={setShowDeleteFacultyModal}
+              setSelectedFaculty={setSelectedFaculty}
+              setSelectedDepartment={setSelectedDepartment}
+              handleFacultyFilterChange={handleFacultyFilterChange}
+              handleDepartmentFilterChange={handleDepartmentFilterChange}
+              refreshFaculties={refreshFaculties}
+              refreshDepartments={refreshDepartments}
+              fetchFaculties={fetchFaculties}
+              fetchDepartments={fetchDepartments}
+              setFacultyViewMode={setFacultyViewMode}
+              setDepartmentViewMode={setDepartmentViewMode}
+            />
+            <CreateFacultyModal
+              isOpen={showCreateFacultyModal}
+              onClose={() => setShowCreateFacultyModal(false)}
+              onSuccess={() => {
+                refreshFaculties();
+                setShowCreateFacultyModal(false);
+              }}
+            />
+            <CreateDepartmentModal
+              isOpen={showCreateDepartmentModal}
+              onClose={() => setShowCreateDepartmentModal(false)}
+              onSuccess={() => {
+                refreshDepartments();
+                setShowCreateDepartmentModal(false);
+              }}
+            />
+          </>
         );
 
       case 'students':
