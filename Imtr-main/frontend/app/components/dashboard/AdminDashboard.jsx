@@ -43,6 +43,10 @@ import EditProgramModal from '@/app/components/modals/EditProgramModal';
 import DeleteProgramModal from '@/app/components/modals/DeleteProgramModal';
 import CreateFacultyModal from '@/app/components/modals/CreateFacultyModal';
 import CreateDepartmentModal from '@/app/components/modals/CreateDepartmentModal';
+import ViewFacultyModal from '@/app/components/modals/ViewFacultyModal';
+import EditFacultyModal from '@/app/components/modals/EditFacultyModal';
+import ViewDepartmentModal from '@/app/components/modals/ViewDepartmentModal';
+import EditDepartmentModal from '@/app/components/modals/EditDepartmentModal';
 import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 import ProgramsSection from './ProgramsSection';
@@ -841,6 +845,10 @@ const AdminDashboard = ({ activeMenu }) => {
               setShowDeleteModal={setShowDeleteFacultyModal}
               setSelectedFaculty={setSelectedFaculty}
               setSelectedDepartment={setSelectedDepartment}
+              // Additional modal setters for department actions
+              setShowViewDepartmentModal={setShowViewDepartmentModal}
+              setShowEditDepartmentModal={setShowEditDepartmentModal}
+              setShowDeleteDepartmentModal={setShowDeleteDepartmentModal}
               handleFacultyFilterChange={handleFacultyFilterChange}
               handleDepartmentFilterChange={handleDepartmentFilterChange}
               refreshFaculties={refreshFaculties}
@@ -864,6 +872,48 @@ const AdminDashboard = ({ activeMenu }) => {
               onSuccess={() => {
                 refreshDepartments();
                 setShowCreateDepartmentModal(false);
+              }}
+            />
+            <ViewFacultyModal
+              isOpen={showViewFacultyModal}
+              onClose={() => {
+                setShowViewFacultyModal(false);
+                setSelectedFaculty(null);
+              }}
+              faculty={selectedFaculty}
+            />
+            <EditFacultyModal
+              isOpen={showEditFacultyModal}
+              onClose={() => {
+                setShowEditFacultyModal(false);
+                setSelectedFaculty(null);
+              }}
+              faculty={selectedFaculty}
+              onSuccess={() => {
+                refreshFaculties();
+                setShowEditFacultyModal(false);
+                setSelectedFaculty(null);
+              }}
+            />
+            <ViewDepartmentModal
+              isOpen={showViewDepartmentModal}
+              onClose={() => {
+                setShowViewDepartmentModal(false);
+                setSelectedDepartment(null);
+              }}
+              department={selectedDepartment}
+            />
+            <EditDepartmentModal
+              isOpen={showEditDepartmentModal}
+              onClose={() => {
+                setShowEditDepartmentModal(false);
+                setSelectedDepartment(null);
+              }}
+              department={selectedDepartment}
+              onSuccess={() => {
+                refreshDepartments();
+                setShowEditDepartmentModal(false);
+                setSelectedDepartment(null);
               }}
             />
           </>
