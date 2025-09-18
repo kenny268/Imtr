@@ -7,6 +7,8 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
   const { showError, showSuccess } = useUI();
   const [loading, setLoading] = useState(false);
   const [lecturers, setLecturers] = useState([]);
+  const [faculties, setFaculties] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -16,8 +18,8 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
     total_credits: 120,
     min_credits_per_semester: 12,
     max_credits_per_semester: 18,
-    department: '',
-    faculty: '',
+    faculty_id: '',
+    department_id: '',
     coordinator_id: '',
     status: 'active',
     accreditation_body: '',
@@ -43,16 +45,67 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await api.get('/users?role=LECTURER&limit=100');
       if (response.data.success) {
-        setLecturers(response.data.data.users || []);
+        const data = response.data.data;
+        if (Array.isArray(data)) {
+          setLecturers(data);
+        } else if (data && Array.isArray(data.users)) {
+          setLecturers(data.users);
+        } else {
+          setLecturers([]);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch lecturers:', error);
+      setLecturers([]);
+    }
+  };
+
+  // Fetch faculties for faculty dropdown
+  const fetchFaculties = async () => {
+    try {
+      const response = await api.get('/faculties?limit=100');
+      if (response.data.success) {
+        const data = response.data.data;
+        if (Array.isArray(data)) {
+          setFaculties(data);
+        } else if (data && Array.isArray(data.faculties)) {
+          setFaculties(data.faculties);
+        } else {
+          setFaculties([]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch faculties:', error);
+      setFaculties([]);
+    }
+  };
+
+  // Fetch departments for department dropdown
+  const fetchDepartments = async (facultyId = null) => {
+    try {
+      const url = facultyId ? `/departments?faculty_id=${facultyId}&limit=100` : '/departments?limit=100';
+      const response = await api.get(url);
+      if (response.data.success) {
+        const data = response.data.data;
+        if (Array.isArray(data)) {
+          setDepartments(data);
+        } else if (data && Array.isArray(data.departments)) {
+          setDepartments(data.departments);
+        } else {
+          setDepartments([]);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch departments:', error);
+      setDepartments([]);
     }
   };
 
   useEffect(() => {
     if (isOpen) {
       fetchLecturers();
+      fetchFaculties();
+      fetchDepartments();
     }
   }, [isOpen]);
 
@@ -62,6 +115,22 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
       ...prev,
       [name]: type === 'number' ? (value ? parseInt(value) : '') : value
     }));
+  };
+
+  const handleFacultyChange = (e) => {
+    const facultyId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      faculty_id: facultyId,
+      department_id: '' // Reset department when faculty changes
+    }));
+    
+    // Fetch departments for the selected faculty
+    if (facultyId) {
+      fetchDepartments(facultyId);
+    } else {
+      fetchDepartments(); // Fetch all departments if no faculty selected
+    }
   };
 
   const handleArrayInputChange = (field, value) => {
@@ -111,8 +180,8 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
           total_credits: 120,
           min_credits_per_semester: 12,
           max_credits_per_semester: 18,
-          department: '',
-          faculty: '',
+          faculty_id: '',
+          department_id: '',
           coordinator_id: '',
           status: 'active',
           accreditation_body: '',
@@ -295,30 +364,45 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Department
+                  Faculty *
                 </label>
-                <input
-                  type="text"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleInputChange}
+                <select
+                  name="faculty_id"
+                  value={formData.faculty_id}
+                  onChange={handleFacultyChange}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
-                  placeholder="e.g., Computer Science"
-                />
+                >
+                  <option value="">Select Faculty</option>
+                  {Array.isArray(faculties) && faculties.map((faculty) => (
+                    <option key={faculty.id} value={faculty.id}>
+                      {faculty.name} ({faculty.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Faculty
+                  Department *
                 </label>
-                <input
-                  type="text"
-                  name="faculty"
-                  value={formData.faculty}
+                <select
+                  name="department_id"
+                  value={formData.department_id}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
-                  placeholder="e.g., Faculty of Technology"
-                />
+                  required
+                  disabled={!formData.faculty_id}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {formData.faculty_id ? 'Select Department' : 'Select Faculty first'}
+                  </option>
+                  {Array.isArray(departments) && departments.map((department) => (
+                    <option key={department.id} value={department.id}>
+                      {department.name} ({department.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="md:col-span-2">
