@@ -8,7 +8,7 @@ class ProgramController {
       const program = await programService.createProgram(req.body);
       sendSuccess(res, program, 'Program created successfully', 201);
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -18,7 +18,7 @@ class ProgramController {
       const result = await programService.getPrograms(req.query);
       sendSuccess(res, result, 'Programs retrieved successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -28,7 +28,7 @@ class ProgramController {
       const program = await programService.getProgramById(req.params.id);
       sendSuccess(res, program, 'Program retrieved successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -38,7 +38,7 @@ class ProgramController {
       const program = await programService.updateProgram(req.params.id, req.body);
       sendSuccess(res, program, 'Program updated successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -48,7 +48,7 @@ class ProgramController {
       const result = await programService.deleteProgram(req.params.id);
       sendSuccess(res, result, 'Program deleted successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -58,7 +58,7 @@ class ProgramController {
       const statistics = await programService.getProgramStatistics();
       sendSuccess(res, statistics, 'Program statistics retrieved successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 
@@ -68,7 +68,7 @@ class ProgramController {
       const options = await programService.getProgramOptions();
       sendSuccess(res, options, 'Program options retrieved successfully');
     } catch (error) {
-      sendError(res, error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 }
