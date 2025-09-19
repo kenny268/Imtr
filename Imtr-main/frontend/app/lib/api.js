@@ -57,10 +57,10 @@ api.interceptors.response.use(
           break;
         case 500:
           // Server error
-          console.error('Server error:', data.message);
+          console.error('Server error:', typeof data.message === 'object' ? JSON.stringify(data.message) : data.message);
           break;
         default:
-          console.error('API Error:', data.message || 'Unknown error');
+          console.error('API Error:', typeof data.message === 'object' ? JSON.stringify(data.message) : (data.message || 'Unknown error'));
       }
     } else if (error.request) {
       // Network error

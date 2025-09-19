@@ -63,7 +63,10 @@ export const UIProvider = ({ children }) => {
   }, []);
 
   const showSuccess = useCallback((message) => showToast(message, 'success'), [showToast]);
-  const showError = useCallback((message) => showToast(message, 'error'), [showToast]);
+  const showError = useCallback((message) => {
+    const displayMessage = typeof message === 'object' ? JSON.stringify(message) : message;
+    showToast(displayMessage, 'error');
+  }, [showToast]);
   const showWarning = useCallback((message) => showToast(message, 'warning'), [showToast]);
   const showInfo = useCallback((message) => showToast(message, 'info'), [showToast]);
 
@@ -104,7 +107,11 @@ export const UIProvider = ({ children }) => {
     if (error.response?.data?.errors) {
       showValidationErrors(error.response.data);
     } else if (error.response?.data?.message) {
-      showError(error.response.data.message);
+      const message = error.response.data.message;
+      const displayMessage = typeof message === 'object' 
+        ? JSON.stringify(message) 
+        : message;
+      showError(displayMessage);
     } else if (error.message) {
       showError(error.message);
     } else {

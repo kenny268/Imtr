@@ -204,7 +204,11 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error('Failed to create program:', error);
-      showError(error.response?.data?.message || 'Failed to create program');
+      const errorMessage = error.response?.data?.message;
+      const displayMessage = typeof errorMessage === 'object' 
+        ? JSON.stringify(errorMessage) 
+        : (errorMessage || 'Failed to create program');
+      showError(displayMessage);
     } finally {
       setLoading(false);
     }
