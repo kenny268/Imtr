@@ -44,17 +44,17 @@ const programSchemas = {
     max_credits_per_semester: Joi.number().integer().min(1).max(50).default(18),
     faculty_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     department_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     coordinator_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').default('active'),
@@ -89,17 +89,17 @@ const programSchemas = {
     max_credits_per_semester: Joi.number().integer().min(1).max(50).optional(),
     faculty_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     department_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     coordinator_id: Joi.alternatives().try(
       Joi.number().integer().positive(),
-      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.string().pattern(/^\d+$/),
       Joi.valid(null, '')
     ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').optional(),

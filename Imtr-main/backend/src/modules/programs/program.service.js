@@ -15,36 +15,37 @@ class ProgramService {
         throw new ConflictError('Program code already exists');
       }
 
-      // Check if faculty exists if provided
+      // Convert string IDs to numbers and validate
       if (programData.faculty_id && programData.faculty_id !== '') {
-        const faculty = await Faculty.findByPk(programData.faculty_id);
+        const facultyId = typeof programData.faculty_id === 'string' ? parseInt(programData.faculty_id, 10) : programData.faculty_id;
+        const faculty = await Faculty.findByPk(facultyId);
         if (!faculty) {
           throw new AppError('Invalid faculty ID', 400);
         }
+        programData.faculty_id = facultyId;
       } else {
-        // Set faculty_id to null if empty string
         programData.faculty_id = null;
       }
 
-      // Check if department exists if provided
       if (programData.department_id && programData.department_id !== '') {
-        const department = await Department.findByPk(programData.department_id);
+        const departmentId = typeof programData.department_id === 'string' ? parseInt(programData.department_id, 10) : programData.department_id;
+        const department = await Department.findByPk(departmentId);
         if (!department) {
           throw new AppError('Invalid department ID', 400);
         }
+        programData.department_id = departmentId;
       } else {
-        // Set department_id to null if empty string
         programData.department_id = null;
       }
 
-      // Validate coordinator if provided
       if (programData.coordinator_id && programData.coordinator_id !== '') {
-        const coordinator = await Lecturer.findByPk(programData.coordinator_id);
+        const coordinatorId = typeof programData.coordinator_id === 'string' ? parseInt(programData.coordinator_id, 10) : programData.coordinator_id;
+        const coordinator = await Lecturer.findByPk(coordinatorId);
         if (!coordinator) {
           throw new AppError('Invalid coordinator ID', 400);
         }
+        programData.coordinator_id = coordinatorId;
       } else {
-        // Set coordinator_id to null if empty string
         programData.coordinator_id = null;
       }
 
