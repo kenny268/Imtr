@@ -32,6 +32,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'department_id',
         as: 'department'
       });
+
+      // Program belongs to Lecturer (coordinator)
+      Program.belongsTo(models.Lecturer, {
+        foreignKey: 'coordinator_id',
+        as: 'coordinator'
+      });
     }
   }
 

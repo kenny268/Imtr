@@ -33,6 +33,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'lead_lecturer_id',
         as: 'ledResearchProjects'
       });
+
+      // Lecturer can coordinate many Programs
+      Lecturer.hasMany(models.Program, {
+        foreignKey: 'coordinator_id',
+        as: 'coordinatedPrograms'
+      });
     }
   }
 

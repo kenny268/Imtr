@@ -94,25 +94,30 @@ class ProgramService {
         {
           model: Faculty,
           as: 'faculty',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'code'],
+          required: false
         },
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name', 'code'],
+          required: false
         },
         {
           model: Lecturer,
           as: 'coordinator',
           attributes: ['id', 'staff_no', 'user_id'],
+          required: false,
           include: [{
             model: require('../../models').User,
             as: 'user',
             attributes: ['id', 'email'],
+            required: false,
             include: [{
               model: require('../../models').Profile,
               as: 'profile',
-              attributes: ['first_name', 'last_name']
+              attributes: ['first_name', 'last_name'],
+              required: false
             }]
           }]
         },
