@@ -25,7 +25,7 @@ const programSchemas = {
         'string.min': 'Program code must be at least 2 characters',
         'string.max': 'Program code cannot exceed 20 characters'
       }),
-    description: Joi.string().trim().max(1000).optional(),
+    description: Joi.string().trim().max(1000).allow('').optional(),
     level: Joi.string().valid('certificate', 'diploma', 'bachelor', 'master', 'phd', 'postdoc').required()
       .messages({
         'any.only': 'Level must be one of: certificate, diploma, bachelor, master, phd, postdoc'
@@ -42,9 +42,21 @@ const programSchemas = {
       }),
     min_credits_per_semester: Joi.number().integer().min(1).max(50).default(12),
     max_credits_per_semester: Joi.number().integer().min(1).max(50).default(18),
-    faculty_id: Joi.number().integer().positive().optional(),
-    department_id: Joi.number().integer().positive().optional(),
-    coordinator_id: Joi.number().integer().positive().allow(null).optional(),
+    faculty_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
+    department_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
+    coordinator_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').default('active'),
     accreditation_body: Joi.string().trim().max(255).allow('').optional(),
     accreditation_number: Joi.string().trim().max(100).allow('').optional(),
@@ -69,15 +81,27 @@ const programSchemas = {
   update: Joi.object({
     name: Joi.string().trim().min(3).max(255).optional(),
     code: Joi.string().trim().min(2).max(20).optional(),
-    description: Joi.string().trim().max(1000).optional(),
+    description: Joi.string().trim().max(1000).allow('').optional(),
     level: Joi.string().valid('certificate', 'diploma', 'bachelor', 'master', 'phd', 'postdoc').optional(),
     duration_months: Joi.number().integer().min(1).max(120).optional(),
     total_credits: Joi.number().integer().min(1).max(200).optional(),
     min_credits_per_semester: Joi.number().integer().min(1).max(50).optional(),
     max_credits_per_semester: Joi.number().integer().min(1).max(50).optional(),
-    faculty_id: Joi.number().integer().positive().optional(),
-    department_id: Joi.number().integer().positive().optional(),
-    coordinator_id: Joi.number().integer().positive().allow(null).optional(),
+    faculty_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
+    department_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
+    coordinator_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/).transform((val) => parseInt(val, 10)),
+      Joi.valid(null, '')
+    ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').optional(),
     accreditation_body: Joi.string().trim().max(255).allow('').optional(),
     accreditation_number: Joi.string().trim().max(100).allow('').optional(),

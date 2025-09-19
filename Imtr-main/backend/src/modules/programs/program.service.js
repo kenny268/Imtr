@@ -16,27 +16,36 @@ class ProgramService {
       }
 
       // Check if faculty exists if provided
-      if (programData.faculty_id) {
+      if (programData.faculty_id && programData.faculty_id !== '') {
         const faculty = await Faculty.findByPk(programData.faculty_id);
         if (!faculty) {
           throw new AppError('Invalid faculty ID', 400);
         }
+      } else {
+        // Set faculty_id to null if empty string
+        programData.faculty_id = null;
       }
 
       // Check if department exists if provided
-      if (programData.department_id) {
+      if (programData.department_id && programData.department_id !== '') {
         const department = await Department.findByPk(programData.department_id);
         if (!department) {
           throw new AppError('Invalid department ID', 400);
         }
+      } else {
+        // Set department_id to null if empty string
+        programData.department_id = null;
       }
 
       // Validate coordinator if provided
-      if (programData.coordinator_id) {
+      if (programData.coordinator_id && programData.coordinator_id !== '') {
         const coordinator = await Lecturer.findByPk(programData.coordinator_id);
         if (!coordinator) {
           throw new AppError('Invalid coordinator ID', 400);
         }
+      } else {
+        // Set coordinator_id to null if empty string
+        programData.coordinator_id = null;
       }
 
       const program = await Program.create(programData);
