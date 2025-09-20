@@ -34,6 +34,9 @@ export function formatPhoneNumber(phone) {
 }
 
 export function generateInitials(name) {
+  if (!name || typeof name !== 'string') {
+    return 'U';
+  }
   return name
     .split(' ')
     .map(word => word.charAt(0))
