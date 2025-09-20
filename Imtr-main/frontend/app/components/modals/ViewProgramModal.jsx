@@ -172,14 +172,14 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Department
               </label>
-              <p className="text-gray-900 dark:text-white">{program.department || 'Not specified'}</p>
+              <p className="text-gray-900 dark:text-white">{program.department?.name || 'Not specified'}</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Faculty
               </label>
-              <p className="text-gray-900 dark:text-white">{program.faculty || 'Not specified'}</p>
+              <p className="text-gray-900 dark:text-white">{program.faculty?.name || 'Not specified'}</p>
             </div>
           </div>
 

@@ -262,7 +262,7 @@ const ProgramsSection = ({
                             {program.name}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {program.code} • {program.department || 'No Department'}
+                            {program.code} • {program.department?.name || 'No Department'}
                           </div>
                         </div>
                       </div>
