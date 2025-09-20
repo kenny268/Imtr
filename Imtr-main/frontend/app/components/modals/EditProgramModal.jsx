@@ -142,9 +142,9 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
         accreditation_number: program.accreditation_number || '',
         accreditation_date: program.accreditation_date ? program.accreditation_date.split('T')[0] : '',
         accreditation_expiry: program.accreditation_expiry ? program.accreditation_expiry.split('T')[0] : '',
-        entry_requirements: Array.isArray(program.entry_requirements) ? program.entry_requirements : [],
-        learning_outcomes: Array.isArray(program.learning_outcomes) ? program.learning_outcomes : [],
-        career_prospects: Array.isArray(program.career_prospects) ? program.career_prospects : []
+        entry_requirements: Array.isArray(program.entry_requirements) ? program.entry_requirements : (program.entry_requirements ? [program.entry_requirements] : []),
+        learning_outcomes: Array.isArray(program.learning_outcomes) ? program.learning_outcomes : (program.learning_outcomes ? [program.learning_outcomes] : []),
+        career_prospects: Array.isArray(program.career_prospects) ? program.career_prospects : (program.career_prospects ? [program.career_prospects] : [])
       });
       
       // Fetch data for dropdowns
@@ -622,7 +622,7 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Entry Requirements
               </label>
               <textarea
-                value={formData.entry_requirements.join('\n')}
+                value={Array.isArray(formData.entry_requirements) ? formData.entry_requirements.join('\n') : ''}
                 onChange={(e) => handleArrayInputChange('entry_requirements', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
@@ -635,7 +635,7 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Learning Outcomes
               </label>
               <textarea
-                value={formData.learning_outcomes.join('\n')}
+                value={Array.isArray(formData.learning_outcomes) ? formData.learning_outcomes.join('\n') : ''}
                 onChange={(e) => handleArrayInputChange('learning_outcomes', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
@@ -648,7 +648,7 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Career Prospects
               </label>
               <textarea
-                value={formData.career_prospects.join('\n')}
+                value={Array.isArray(formData.career_prospects) ? formData.career_prospects.join('\n') : ''}
                 onChange={(e) => handleArrayInputChange('career_prospects', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
