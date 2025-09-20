@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   HiHome, 
   HiUsers, 
+  HiUser,
   HiAcademicCap, 
   HiUserGroup, 
   HiBookOpen, 
@@ -34,22 +35,23 @@ const Sidebar = () => {
   const menuItems = MENU_ITEMS[userRole] || MENU_ITEMS[USER_ROLES.STUDENT];
 
   const iconMap = {
-    HiHome,
-    HiUsers,
-    HiAcademicCap,
-    HiUserGroup,
-    HiBookOpen,
-    HiCollection,
-    HiCurrencyDollar,
-    HiLibrary,
-    HiChartBar,
-    HiCog,
-    HiClipboardList,
-    HiClock,
-    HiLightBulb,
-    HiDocumentText,
-    HiCloud,
-    HiOfficeBuilding,
+    'HiHome': HiHome,
+    'HiUsers': HiUsers,
+    'HiUser': HiUser,
+    'HiAcademicCap': HiAcademicCap,
+    'HiUserGroup': HiUserGroup,
+    'HiBookOpen': HiBookOpen,
+    'HiCollection': HiCollection,
+    'HiCurrencyDollar': HiCurrencyDollar,
+    'HiLibrary': HiLibrary,
+    'HiChartBar': HiChartBar,
+    'HiCog': HiCog,
+    'HiClipboardList': HiClipboardList,
+    'HiClock': HiClock,
+    'HiLightBulb': HiLightBulb,
+    'HiDocumentText': HiDocumentText,
+    'HiCloud': HiCloud,
+    'HiOfficeBuilding': HiOfficeBuilding,
   };
 
   const handleMenuClick = (menuId) => {
