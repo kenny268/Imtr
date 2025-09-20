@@ -58,8 +58,8 @@ const programSchemas = {
       Joi.valid(null, '')
     ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').default('active'),
-    accreditation_body: Joi.string().trim().max(255).allow('').optional(),
-    accreditation_number: Joi.string().trim().max(100).allow('').optional(),
+    accreditation_body: Joi.string().trim().max(255).allow('', null).optional(),
+    accreditation_number: Joi.string().trim().max(100).allow('', null).optional(),
     accreditation_date: Joi.date().iso().allow(null).optional(),
     accreditation_expiry: Joi.date().iso().allow(null).optional(),
     entry_requirements: Joi.array().items(Joi.string()).allow(null).optional(),
@@ -103,8 +103,8 @@ const programSchemas = {
       Joi.valid(null, '')
     ).optional(),
     status: Joi.string().valid('active', 'inactive', 'suspended', 'archived').optional(),
-    accreditation_body: Joi.string().trim().max(255).allow('').optional(),
-    accreditation_number: Joi.string().trim().max(100).allow('').optional(),
+    accreditation_body: Joi.string().trim().max(255).allow('', null).optional(),
+    accreditation_number: Joi.string().trim().max(100).allow('', null).optional(),
     accreditation_date: Joi.date().iso().allow(null).optional(),
     accreditation_expiry: Joi.date().iso().allow(null).optional(),
     entry_requirements: Joi.array().items(Joi.string()).allow(null).optional(),

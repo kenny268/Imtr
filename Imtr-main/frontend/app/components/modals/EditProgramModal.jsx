@@ -210,8 +210,8 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
         department_id: formData.department_id || null,
         coordinator_id: formData.coordinator_id || null,
         status: formData.status,
-        accreditation_body: formData.accreditation_body.trim() || null,
-        accreditation_number: formData.accreditation_number.trim() || null,
+        accreditation_body: formData.accreditation_body.trim() || '',
+        accreditation_number: formData.accreditation_number.trim() || '',
         accreditation_date: formData.accreditation_date || null,
         accreditation_expiry: formData.accreditation_expiry || null,
         entry_requirements: formData.entry_requirements.length > 0 ? formData.entry_requirements : null,
@@ -246,8 +246,8 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
   if (!isOpen || !program) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white dark:bg-dark-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-700">
           <div className="flex items-center space-x-3">

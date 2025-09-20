@@ -82,7 +82,8 @@ const Sidebar = () => {
         className={cn(
           'fixed left-0 top-0 h-full bg-white dark:bg-dark-800 border-r border-gray-200 dark:border-dark-700 z-50',
           'lg:translate-x-0 lg:static lg:z-auto',
-          sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
+          sidebarCollapsed ? 'lg:w-20' : 'lg:w-64',
+          !sidebarOpen && 'hidden lg:flex'
         )}
       >
         <div className="flex flex-col h-full">
