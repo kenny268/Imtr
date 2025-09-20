@@ -149,19 +149,35 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
       
       // Prepare data for submission
       const submitData = {
-        ...formData,
+        name: formData.name.trim(),
+        code: formData.code.trim(),
+        description: formData.description.trim() || null,
+        level: formData.level,
+        duration_months: parseInt(formData.duration_months),
+        total_credits: parseInt(formData.total_credits),
+        min_credits_per_semester: parseInt(formData.min_credits_per_semester),
+        max_credits_per_semester: parseInt(formData.max_credits_per_semester),
+        faculty_id: formData.faculty_id || null,
+        department_id: formData.department_id || null,
         coordinator_id: formData.coordinator_id || null,
-        tuition_fee: formData.tuition_fee ? parseFloat(formData.tuition_fee) : 0,
-        registration_fee: formData.registration_fee ? parseFloat(formData.registration_fee) : 0,
-        examination_fee: formData.examination_fee ? parseFloat(formData.examination_fee) : 0,
-        library_fee: formData.library_fee ? parseFloat(formData.library_fee) : 0,
-        laboratory_fee: formData.laboratory_fee ? parseFloat(formData.laboratory_fee) : 0,
-        max_students: formData.max_students ? parseInt(formData.max_students) : null,
+        status: formData.status,
+        accreditation_body: formData.accreditation_body.trim() || null,
+        accreditation_number: formData.accreditation_number.trim() || null,
         accreditation_date: formData.accreditation_date || null,
         accreditation_expiry: formData.accreditation_expiry || null,
+        entry_requirements: formData.entry_requirements.length > 0 ? formData.entry_requirements : null,
+        learning_outcomes: formData.learning_outcomes.length > 0 ? formData.learning_outcomes : null,
+        career_prospects: formData.career_prospects.length > 0 ? formData.career_prospects : null,
+        tuition_fee: formData.tuition_fee ? parseFloat(formData.tuition_fee) : null,
+        registration_fee: formData.registration_fee ? parseFloat(formData.registration_fee) : null,
+        examination_fee: formData.examination_fee ? parseFloat(formData.examination_fee) : null,
+        library_fee: formData.library_fee ? parseFloat(formData.library_fee) : null,
+        laboratory_fee: formData.laboratory_fee ? parseFloat(formData.laboratory_fee) : null,
+        other_fees: null, // This is a JSON field, can be extended later
         start_date: formData.start_date || null,
         end_date: formData.end_date || null,
-        application_deadline: formData.application_deadline || null
+        application_deadline: formData.application_deadline || null,
+        max_students: formData.max_students ? parseInt(formData.max_students) : null
       };
 
       const response = await api.post('/programs', submitData);

@@ -255,27 +255,21 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Application Start Date
-                </label>
-                <p className="text-gray-900 dark:text-white">{formatDate(program.application_start_date)}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Application End Date
-                </label>
-                <p className="text-gray-900 dark:text-white">{formatDate(program.application_end_date)}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Program Start Date
                 </label>
-                <p className="text-gray-900 dark:text-white">{formatDate(program.program_start_date)}</p>
+                <p className="text-gray-900 dark:text-white">{formatDate(program.start_date)}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Program End Date
                 </label>
-                <p className="text-gray-900 dark:text-white">{formatDate(program.program_end_date)}</p>
+                <p className="text-gray-900 dark:text-white">{formatDate(program.end_date)}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Application Deadline
+                </label>
+                <p className="text-gray-900 dark:text-white">{formatDate(program.application_deadline)}</p>
               </div>
             </div>
           </div>

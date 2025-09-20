@@ -123,6 +123,8 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
         level: program.level || '',
         duration_months: program.duration_months || '',
         total_credits: program.total_credits || '',
+        min_credits_per_semester: program.min_credits_per_semester || 12,
+        max_credits_per_semester: program.max_credits_per_semester || 18,
         faculty_id: program.faculty_id || '',
         department_id: program.department_id || '',
         status: program.status || 'active',
@@ -130,18 +132,19 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
         max_students: program.max_students || '',
         tuition_fee: program.tuition_fee || '',
         registration_fee: program.registration_fee || '',
-        other_fees: program.other_fees || '',
-        application_start_date: program.application_start_date ? program.application_start_date.split('T')[0] : '',
-        application_end_date: program.application_end_date ? program.application_end_date.split('T')[0] : '',
-        program_start_date: program.program_start_date ? program.program_start_date.split('T')[0] : '',
-        program_end_date: program.program_end_date ? program.program_end_date.split('T')[0] : '',
+        examination_fee: program.examination_fee || '',
+        library_fee: program.library_fee || '',
+        laboratory_fee: program.laboratory_fee || '',
+        start_date: program.start_date ? program.start_date.split('T')[0] : '',
+        end_date: program.end_date ? program.end_date.split('T')[0] : '',
+        application_deadline: program.application_deadline ? program.application_deadline.split('T')[0] : '',
         accreditation_body: program.accreditation_body || '',
         accreditation_number: program.accreditation_number || '',
         accreditation_date: program.accreditation_date ? program.accreditation_date.split('T')[0] : '',
         accreditation_expiry: program.accreditation_expiry ? program.accreditation_expiry.split('T')[0] : '',
-        entry_requirements: program.entry_requirements || '',
-        learning_outcomes: program.learning_outcomes || '',
-        career_prospects: program.career_prospects || ''
+        entry_requirements: Array.isArray(program.entry_requirements) ? program.entry_requirements : [],
+        learning_outcomes: Array.isArray(program.learning_outcomes) ? program.learning_outcomes : [],
+        career_prospects: Array.isArray(program.career_prospects) ? program.career_prospects : []
       });
       
       // Fetch data for dropdowns
@@ -165,6 +168,14 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
     }));
   };
 
+  const handleArrayInputChange = (field, value) => {
+    const items = value.split('\n').filter(item => item.trim());
+    setFormData(prev => ({
+      ...prev,
+      [field]: items
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!program?.id) return;
@@ -172,16 +183,36 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
     try {
       setLoading(true);
       
-      // Convert string numbers to actual numbers
+      // Prepare data for submission
       const submitData = {
-        ...formData,
-        duration_months: formData.duration_months ? parseInt(formData.duration_months) : null,
-        total_credits: formData.total_credits ? parseInt(formData.total_credits) : null,
-        max_students: formData.max_students ? parseInt(formData.max_students) : null,
+        name: formData.name.trim(),
+        code: formData.code.trim(),
+        description: formData.description.trim() || null,
+        level: formData.level,
+        duration_months: parseInt(formData.duration_months),
+        total_credits: parseInt(formData.total_credits),
+        min_credits_per_semester: parseInt(formData.min_credits_per_semester),
+        max_credits_per_semester: parseInt(formData.max_credits_per_semester),
+        faculty_id: formData.faculty_id || null,
+        department_id: formData.department_id || null,
+        coordinator_id: formData.coordinator_id || null,
+        status: formData.status,
+        accreditation_body: formData.accreditation_body.trim() || null,
+        accreditation_number: formData.accreditation_number.trim() || null,
+        accreditation_date: formData.accreditation_date || null,
+        accreditation_expiry: formData.accreditation_expiry || null,
+        entry_requirements: formData.entry_requirements.length > 0 ? formData.entry_requirements : null,
+        learning_outcomes: formData.learning_outcomes.length > 0 ? formData.learning_outcomes : null,
+        career_prospects: formData.career_prospects.length > 0 ? formData.career_prospects : null,
         tuition_fee: formData.tuition_fee ? parseFloat(formData.tuition_fee) : null,
         registration_fee: formData.registration_fee ? parseFloat(formData.registration_fee) : null,
-        other_fees: formData.other_fees ? parseFloat(formData.other_fees) : null,
-        coordinator_id: formData.coordinator_id || null
+        examination_fee: formData.examination_fee ? parseFloat(formData.examination_fee) : null,
+        library_fee: formData.library_fee ? parseFloat(formData.library_fee) : null,
+        laboratory_fee: formData.laboratory_fee ? parseFloat(formData.laboratory_fee) : null,
+        start_date: formData.start_date || null,
+        end_date: formData.end_date || null,
+        application_deadline: formData.application_deadline || null,
+        max_students: formData.max_students ? parseInt(formData.max_students) : null
       };
 
       const response = await api.put(`/programs/${program.id}`, submitData);
@@ -591,11 +622,11 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Entry Requirements
               </label>
               <textarea
-                name="entry_requirements"
-                value={formData.entry_requirements}
-                onChange={handleInputChange}
+                value={formData.entry_requirements.join('\n')}
+                onChange={(e) => handleArrayInputChange('entry_requirements', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
+                placeholder="KCSE Grade C+&#10;Mathematics Grade C+&#10;English Grade C+"
               />
             </div>
 
@@ -604,11 +635,11 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Learning Outcomes
               </label>
               <textarea
-                name="learning_outcomes"
-                value={formData.learning_outcomes}
-                onChange={handleInputChange}
+                value={formData.learning_outcomes.join('\n')}
+                onChange={(e) => handleArrayInputChange('learning_outcomes', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
+                placeholder="Students will be able to...&#10;Students will understand...&#10;Students will demonstrate..."
               />
             </div>
 
@@ -617,11 +648,11 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
                 Career Prospects
               </label>
               <textarea
-                name="career_prospects"
-                value={formData.career_prospects}
-                onChange={handleInputChange}
+                value={formData.career_prospects.join('\n')}
+                onChange={(e) => handleArrayInputChange('career_prospects', e.target.value)}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
+                placeholder="Software Developer&#10;System Analyst&#10;Database Administrator"
               />
             </div>
           </div>
