@@ -304,43 +304,64 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
           )}
 
           {/* Entry Requirements */}
-          {program.entry_requirements && (
+          {program.entry_requirements && program.entry_requirements.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Entry Requirements
               </label>
               <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {program.entry_requirements}
-                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  {Array.isArray(program.entry_requirements) 
+                    ? program.entry_requirements.map((requirement, index) => (
+                        <li key={index} className="text-gray-700 dark:text-gray-300">
+                          {requirement}
+                        </li>
+                      ))
+                    : <p className="text-gray-700 dark:text-gray-300">{program.entry_requirements}</p>
+                  }
+                </ul>
               </div>
             </div>
           )}
 
           {/* Learning Outcomes */}
-          {program.learning_outcomes && (
+          {program.learning_outcomes && program.learning_outcomes.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Learning Outcomes
               </label>
               <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {program.learning_outcomes}
-                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  {Array.isArray(program.learning_outcomes) 
+                    ? program.learning_outcomes.map((outcome, index) => (
+                        <li key={index} className="text-gray-700 dark:text-gray-300">
+                          {outcome}
+                        </li>
+                      ))
+                    : <p className="text-gray-700 dark:text-gray-300">{program.learning_outcomes}</p>
+                  }
+                </ul>
               </div>
             </div>
           )}
 
           {/* Career Prospects */}
-          {program.career_prospects && (
+          {program.career_prospects && program.career_prospects.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Career Prospects
               </label>
               <div className="bg-gray-50 dark:bg-dark-700 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {program.career_prospects}
-                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  {Array.isArray(program.career_prospects) 
+                    ? program.career_prospects.map((prospect, index) => (
+                        <li key={index} className="text-gray-700 dark:text-gray-300">
+                          {prospect}
+                        </li>
+                      ))
+                    : <p className="text-gray-700 dark:text-gray-300">{program.career_prospects}</p>
+                  }
+                </ul>
               </div>
             </div>
           )}
