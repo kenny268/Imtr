@@ -48,13 +48,13 @@ const EditProgramModal = ({ isOpen, onClose, program, onSave }) => {
   // Fetch lecturers for coordinator dropdown
   const fetchLecturers = async () => {
     try {
-      const response = await api.get('/users?role=LECTURER&limit=100');
+      const response = await api.get('/lecturers?limit=100');
       if (response.data.success) {
         const data = response.data.data;
         if (Array.isArray(data)) {
           setLecturers(data);
-        } else if (data && Array.isArray(data.users)) {
-          setLecturers(data.users);
+        } else if (data && Array.isArray(data.lecturers)) {
+          setLecturers(data.lecturers);
         } else {
           setLecturers([]);
         }

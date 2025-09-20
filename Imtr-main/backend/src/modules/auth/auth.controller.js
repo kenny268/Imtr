@@ -39,7 +39,7 @@ const login = asyncHandler(async (req, res) => {
   // Set cookies
   setTokenCookies(res, tokens.accessToken, tokens.refreshToken);
 
-  return sendSuccess(res, user, 'Login successful');
+  return sendSuccess(res, { user, token: tokens.accessToken }, 'Login successful');
 });
 
 /**

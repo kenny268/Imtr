@@ -43,13 +43,13 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
   // Fetch lecturers for coordinator dropdown
   const fetchLecturers = async () => {
     try {
-      const response = await api.get('/users?role=LECTURER&limit=100');
+      const response = await api.get('/lecturers?limit=100');
       if (response.data.success) {
         const data = response.data.data;
         if (Array.isArray(data)) {
           setLecturers(data);
-        } else if (data && Array.isArray(data.users)) {
-          setLecturers(data.users);
+        } else if (data && Array.isArray(data.lecturers)) {
+          setLecturers(data.lecturers);
         } else {
           setLecturers([]);
         }
@@ -438,7 +438,7 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
                   <option value="">Select Coordinator</option>
                   {lecturers.map((lecturer) => (
                     <option key={lecturer.id} value={lecturer.id}>
-                      {lecturer.profile?.first_name} {lecturer.profile?.last_name} ({lecturer.email})
+                      {lecturer.user?.profile?.first_name} {lecturer.user?.profile?.last_name} ({lecturer.user?.email})
                     </option>
                   ))}
                 </select>
