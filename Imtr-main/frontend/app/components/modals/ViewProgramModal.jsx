@@ -166,8 +166,8 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
             </div>
           </div>
 
-          {/* Department & Faculty */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Department, Faculty & Coordinator */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Department
@@ -180,6 +180,18 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
                 Faculty
               </label>
               <p className="text-gray-900 dark:text-white">{program.faculty?.name || 'Not specified'}</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Program Coordinator
+              </label>
+              <p className="text-gray-900 dark:text-white">
+                {program.coordinator?.user?.profile 
+                  ? `${program.coordinator.user.profile.first_name} ${program.coordinator.user.profile.last_name}`
+                  : 'Not assigned'
+                }
+              </p>
             </div>
           </div>
 
@@ -225,7 +237,10 @@ const ViewProgramModal = ({ isOpen, onClose, program }) => {
                   Other Fees
                 </label>
                 <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatCurrency(program.other_fees)}
+                  {typeof program.other_fees === 'number' 
+                    ? formatCurrency(program.other_fees)
+                    : 'Not specified'
+                  }
                 </p>
               </div>
             </div>
