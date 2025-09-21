@@ -23,6 +23,9 @@ import { useUI } from '@/app/contexts/UIContext';
 import { useAuth } from '@/app/lib/auth-context';
 import { api } from '@/app/lib/api';
 import { formatDate, generateInitials } from '@/app/lib/utils';
+import CreateLecturerModal from '@/app/components/modals/CreateLecturerModal';
+import EditLecturerModal from '@/app/components/modals/EditLecturerModal';
+import ViewLecturerModal from '@/app/components/modals/ViewLecturerModal';
 
 const LecturersSection = () => {
   const { showError, showSuccess } = useUI();
@@ -38,6 +41,10 @@ const LecturersSection = () => {
     total: 0,
     total_pages: 0
   });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedLecturer, setSelectedLecturer] = useState(null);
 
   // Fetch lecturers
   const fetchLecturers = async (page = 1, search = '', status = 'all') => {
@@ -88,6 +95,37 @@ const LecturersSection = () => {
 
   const handlePageChange = (page) => {
     fetchLecturers(page, searchTerm, filterStatus);
+  };
+
+  const handleCreateSuccess = () => {
+    fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+  };
+
+  const handleEditSuccess = () => {
+    fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+  };
+
+  const handleViewLecturer = (lecturer) => {
+    setSelectedLecturer(lecturer);
+    setShowViewModal(true);
+  };
+
+  const handleEditLecturer = (lecturer) => {
+    setSelectedLecturer(lecturer);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteLecturer = async (lecturer) => {
+    if (window.confirm(`Are you sure you want to delete ${lecturer.user?.profile?.first_name} ${lecturer.user?.profile?.last_name}?`)) {
+      try {
+        await api.delete(`/lecturers/${lecturer.id}`);
+        showSuccess('Lecturer deleted successfully');
+        fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+      } catch (error) {
+        console.error('Failed to delete lecturer:', error);
+        showError(error.response?.data?.message || 'Failed to delete lecturer');
+      }
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -204,16 +242,25 @@ const LecturersSection = () => {
           Joined {formatDate(lecturer.createdAt)}
         </div>
         <div className="flex items-center space-x-2">
-          <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors">
+          <button 
+            onClick={() => handleViewLecturer(lecturer)}
+            className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
+          >
             <HiEye className="h-4 w-4" />
           </button>
           {hasPermission('lecturers:write') && (
-            <button className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+            <button 
+              onClick={() => handleEditLecturer(lecturer)}
+              className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            >
               <HiPencil className="h-4 w-4" />
             </button>
           )}
           {hasPermission('lecturers:delete') && (
-            <button className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+            <button 
+              onClick={() => handleDeleteLecturer(lecturer)}
+              className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
               <HiTrash className="h-4 w-4" />
             </button>
           )}
@@ -261,16 +308,25 @@ const LecturersSection = () => {
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center space-x-2">
-          <button className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors">
+          <button 
+            onClick={() => handleViewLecturer(lecturer)}
+            className="p-2 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
+          >
             <HiEye className="h-4 w-4" />
           </button>
           {hasPermission('lecturers:write') && (
-            <button className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+            <button 
+              onClick={() => handleEditLecturer(lecturer)}
+              className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            >
               <HiPencil className="h-4 w-4" />
             </button>
           )}
           {hasPermission('lecturers:delete') && (
-            <button className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+            <button 
+              onClick={() => handleDeleteLecturer(lecturer)}
+              className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
               <HiTrash className="h-4 w-4" />
             </button>
           )}
@@ -296,7 +352,10 @@ const LecturersSection = () => {
           <p className="text-gray-600 dark:text-gray-400">Manage lecturers and their information</p>
         </div>
         {hasPermission('lecturers:write') && (
-          <button className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          >
             <HiPlus className="h-5 w-5" />
             <span>Add Lecturer</span>
           </button>
@@ -404,6 +463,32 @@ const LecturersSection = () => {
           )}
           {renderPagination()}
         </>
+      )}
+
+      {/* Modals */}
+      {showCreateModal && (
+        <CreateLecturerModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
+
+      {showEditModal && selectedLecturer && (
+        <EditLecturerModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          lecturer={selectedLecturer}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {showViewModal && selectedLecturer && (
+        <ViewLecturerModal
+          isOpen={showViewModal}
+          onClose={() => setShowViewModal(false)}
+          lecturer={selectedLecturer}
+        />
       )}
     </div>
   );

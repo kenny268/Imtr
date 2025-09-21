@@ -1,6 +1,7 @@
-const { Lecturer } = require('../../models');
+const { Lecturer, User, Profile, Department } = require('../../models');
 const { Op } = require('sequelize');
 const { sendSuccess, sendError } = require('../../utils/responses');
+const bcrypt = require('bcryptjs');
 
 const getLecturers = async (req, res) => {
   try {
@@ -94,7 +95,151 @@ const getLecturerById = async (req, res) => {
   }
 };
 
+const createLecturer = async (req, res) => {
+  try {
+    const { email, password, role = 'LECTURER', profile, lecturer: lecturerData } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return sendError(res, 'User with this email already exists', 400);
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create user
+    const user = await User.create({
+      email,
+      password: hashedPassword,
+      role,
+      status: 'active'
+    });
+
+    // Create profile
+    const profileData = await Profile.create({
+      user_id: user.id,
+      ...profile
+    });
+
+    // Create lecturer
+    const lecturer = await Lecturer.create({
+      user_id: user.id,
+      ...lecturerData
+    });
+
+    // Fetch the complete lecturer with associations
+    const completeLecturer = await Lecturer.findByPk(lecturer.id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'email', 'role'],
+          include: [{
+            model: Profile,
+            as: 'profile',
+            attributes: ['first_name', 'last_name', 'phone', 'gender', 'date_of_birth', 'address', 'city', 'county', 'national_id'],
+          }],
+        },
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name'],
+        }
+      ]
+    });
+
+    sendSuccess(res, 'Lecturer created successfully', completeLecturer, 201);
+  } catch (error) {
+    sendError(res, error.message, error.statusCode || 500, error.errors);
+  }
+};
+
+const updateLecturer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { profile, lecturer: lecturerData } = req.body;
+
+    const lecturer = await Lecturer.findByPk(id, {
+      include: [{
+        model: User,
+        as: 'user',
+        include: [{
+          model: Profile,
+          as: 'profile'
+        }]
+      }]
+    });
+
+    if (!lecturer) {
+      return sendError(res, 'Lecturer not found', 404);
+    }
+
+    // Update profile
+    if (profile) {
+      await lecturer.user.profile.update(profile);
+    }
+
+    // Update lecturer data
+    if (lecturerData) {
+      await lecturer.update(lecturerData);
+    }
+
+    // Fetch updated lecturer with associations
+    const updatedLecturer = await Lecturer.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'email', 'role'],
+          include: [{
+            model: Profile,
+            as: 'profile',
+            attributes: ['first_name', 'last_name', 'phone', 'gender', 'date_of_birth', 'address', 'city', 'county', 'national_id'],
+          }],
+        },
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name'],
+        }
+      ]
+    });
+
+    sendSuccess(res, 'Lecturer updated successfully', updatedLecturer);
+  } catch (error) {
+    sendError(res, error.message, error.statusCode || 500, error.errors);
+  }
+};
+
+const deleteLecturer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const lecturer = await Lecturer.findByPk(id, {
+      include: [{
+        model: User,
+        as: 'user'
+      }]
+    });
+
+    if (!lecturer) {
+      return sendError(res, 'Lecturer not found', 404);
+    }
+
+    // Delete lecturer (this will cascade to user and profile due to foreign key constraints)
+    await lecturer.destroy();
+
+    sendSuccess(res, 'Lecturer deleted successfully', null);
+  } catch (error) {
+    sendError(res, error.message, error.statusCode || 500, error.errors);
+  }
+};
+
 module.exports = {
   getLecturers,
-  getLecturerById
+  getLecturerById,
+  createLecturer,
+  updateLecturer,
+  deleteLecturer
 };
