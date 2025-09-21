@@ -11,6 +11,18 @@ const ROLE_PERMISSIONS = {
     'students:read', 'students:write', 'students:delete',
     'students:admit', 'students:enroll', 'students:clearance',
     
+    // Lecturer management
+    'lecturers:read', 'lecturers:write', 'lecturers:delete',
+    'lecturers:assign_departments', 'lecturers:manage_roles',
+    
+    // Program management
+    'programs:read', 'programs:write', 'programs:delete',
+    'programs:assign_coordinators', 'programs:manage_courses',
+    
+    // Faculty and Department management
+    'faculties:read', 'faculties:write', 'faculties:delete',
+    'departments:read', 'departments:write', 'departments:delete',
+    
     // Course management
     'courses:read', 'courses:write', 'courses:delete',
     'courses:assign_lecturers', 'courses:manage_sections',
@@ -43,6 +55,15 @@ const ROLE_PERMISSIONS = {
   LECTURER: [
     // Student information (read-only)
     'students:read',
+    
+    // Lecturer information (own profile)
+    'lecturers:read',
+    
+    // Program information (read-only)
+    'programs:read',
+    
+    // Faculty and Department information (read-only)
+    'faculties:read', 'departments:read',
     
     // Course management (own courses)
     'courses:read', 'courses:write_own',

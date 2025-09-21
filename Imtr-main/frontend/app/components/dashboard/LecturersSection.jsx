@@ -30,79 +30,70 @@ import ViewLecturerModal from '@/app/components/modals/ViewLecturerModal';
 const LecturersSection = () => {
   const { showError, showSuccess } = useUI();
   const { hasPermission } = useAuth();
-  const [lecturers, setLecturers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 20,
-    total: 0,
-    total_pages: 0
-  });
+  const [currentPage, setCurrentPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedLecturer, setSelectedLecturer] = useState(null);
 
-  // Fetch lecturers
-  const fetchLecturers = async (page = 1, search = '', status = 'all') => {
-    try {
-      setLoading(true);
+  // Use React Query for data fetching
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['lecturers', currentPage, searchTerm, filterStatus],
+    queryFn: async () => {
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: currentPage.toString(),
         limit: '20',
-        ...(search && { search }),
-        ...(status !== 'all' && { status })
+        ...(searchTerm && { search: searchTerm }),
+        ...(filterStatus !== 'all' && { status: filterStatus })
       });
 
       const response = await api.get(`/lecturers?${params}`);
-      
-      if (response.data.success) {
-        const data = response.data.data;
-        setLecturers(data.lecturers || data);
-        setPagination(data.pagination || {
-          current_page: 1,
-          per_page: 20,
-          total: data.lecturers?.length || data.length || 0,
-          total_pages: 1
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch lecturers:', error);
-      showError('Failed to fetch lecturers');
-    } finally {
-      setLoading(false);
-    }
+      return response.data.data;
+    },
+    keepPreviousData: true,
+  });
+
+  // Extract data with defensive programming
+  const lecturers = Array.isArray(data?.lecturers) ? data.lecturers : [];
+  const pagination = data?.pagination || { 
+    total: 0, 
+    pages: 1, 
+    current_page: 1, 
+    per_page: 20 
   };
+  const loading = isLoading;
 
+  // Handle errors
   useEffect(() => {
-    fetchLecturers();
-  }, []);
+    if (isError) {
+      showError(error?.response?.data?.message || 'Failed to fetch lecturers');
+    }
+  }, [isError, error, showError]);
 
+  // Handle search and filter changes
   const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    fetchLecturers(1, value, filterStatus);
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleFilterChange = (e) => {
-    const value = e.target.value;
-    setFilterStatus(value);
-    fetchLecturers(1, searchTerm, value);
+    setFilterStatus(e.target.value);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
   const handlePageChange = (page) => {
-    fetchLecturers(page, searchTerm, filterStatus);
+    setCurrentPage(page);
   };
 
   const handleCreateSuccess = () => {
-    fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+    refetch();
   };
 
   const handleEditSuccess = () => {
-    fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+    refetch();
   };
 
   const handleViewLecturer = (lecturer) => {
@@ -120,7 +111,7 @@ const LecturersSection = () => {
       try {
         await api.delete(`/lecturers/${lecturer.id}`);
         showSuccess('Lecturer deleted successfully');
-        fetchLecturers(pagination.current_page, searchTerm, filterStatus);
+        refetch();
       } catch (error) {
         console.error('Failed to delete lecturer:', error);
         showError(error.response?.data?.message || 'Failed to delete lecturer');
