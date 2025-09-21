@@ -32,8 +32,6 @@ const LecturersSection = () => {
   const { showError, showSuccess } = useUI();
   const { hasPermission, user } = useAuth();
   
-  console.log('LecturersSection - User:', user);
-  console.log('LecturersSection - Has lecturers:read permission:', hasPermission('lecturers:read'));
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
@@ -60,6 +58,7 @@ const LecturersSection = () => {
       console.log('API Response:', response.data);
       return response.data.data;
     },
+    enabled: !!user, // Only fetch when user is authenticated
     keepPreviousData: true,
   });
 
@@ -71,7 +70,14 @@ const LecturersSection = () => {
     current_page: 1, 
     per_page: 20 
   };
-  const loading = isLoading;
+  const loading = isLoading || !user; // Show loading while user is being fetched or data is loading
+
+  // Debug logging
+  console.log('LecturersSection - User:', user);
+  console.log('LecturersSection - Has lecturers:read permission:', hasPermission('lecturers:read'));
+  console.log('LecturersSection - Query enabled:', !!user);
+  console.log('LecturersSection - Is loading:', isLoading);
+  console.log('LecturersSection - Is error:', isError);
 
   // Handle errors
   useEffect(() => {
