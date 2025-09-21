@@ -30,7 +30,10 @@ import ViewLecturerModal from '@/app/components/modals/ViewLecturerModal';
 
 const LecturersSection = () => {
   const { showError, showSuccess } = useUI();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
+  
+  console.log('LecturersSection - User:', user);
+  console.log('LecturersSection - Has lecturers:read permission:', hasPermission('lecturers:read'));
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
@@ -44,6 +47,7 @@ const LecturersSection = () => {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['lecturers', currentPage, searchTerm, filterStatus],
     queryFn: async () => {
+      console.log('Fetching lecturers...');
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '20',
@@ -51,7 +55,9 @@ const LecturersSection = () => {
         ...(filterStatus !== 'all' && { status: filterStatus })
       });
 
+      console.log('API URL:', `/lecturers?${params}`);
       const response = await api.get(`/lecturers?${params}`);
+      console.log('API Response:', response.data);
       return response.data.data;
     },
     keepPreviousData: true,
