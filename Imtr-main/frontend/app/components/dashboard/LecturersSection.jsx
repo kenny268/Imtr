@@ -56,13 +56,14 @@ const LecturersSection = () => {
       console.log('API URL:', `/lecturers?${params}`);
       const response = await api.get(`/lecturers?${params}`);
       console.log('API Response:', response.data);
-      return response.data.data;
+      return response.data.message; // The lecturers data is in response.data.message, not response.data.data
     },
     enabled: !!user, // Only fetch when user is authenticated
     keepPreviousData: true,
   });
 
   // Extract data with defensive programming
+  console.log('Raw data from API:', data);
   const lecturers = Array.isArray(data?.lecturers) ? data.lecturers : [];
   const pagination = data?.pagination || { 
     total: 0, 
@@ -70,6 +71,8 @@ const LecturersSection = () => {
     current_page: 1, 
     per_page: 20 
   };
+  console.log('Extracted lecturers:', lecturers);
+  console.log('Extracted pagination:', pagination);
   const loading = isLoading || !user; // Show loading while user is being fetched or data is loading
 
   // Debug logging
