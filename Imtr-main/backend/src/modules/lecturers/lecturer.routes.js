@@ -11,8 +11,8 @@ const {
 
 const { authenticateToken } = require('../../middleware/auth');
 const { requirePermission } = require('../../middleware/rbac');
-const { validateRequest } = require('../../middleware/validation');
-const { createLecturerSchema, updateLecturerSchema } = require('./lecturer.validation');
+const { validateRequest, validateParams } = require('../../middleware/validation');
+const { createLecturerSchema, updateLecturerSchema, idSchema } = require('./lecturer.validation');
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -26,6 +26,7 @@ router.get('/',
 // Get lecturer by ID
 router.get('/:id',
   requirePermission('lecturers:read'),
+  validateParams(idSchema),
   getLecturerById
 );
 
@@ -39,6 +40,7 @@ router.post('/',
 // Update lecturer
 router.put('/:id',
   requirePermission('lecturers:write'),
+  validateParams(idSchema),
   validateRequest(updateLecturerSchema),
   updateLecturer
 );
@@ -46,6 +48,7 @@ router.put('/:id',
 // Delete lecturer
 router.delete('/:id',
   requirePermission('lecturers:delete'),
+  validateParams(idSchema),
   deleteLecturer
 );
 

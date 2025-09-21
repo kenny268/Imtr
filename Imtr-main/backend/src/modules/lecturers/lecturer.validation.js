@@ -154,7 +154,17 @@ const updateLecturerSchema = Joi.object({
   }).optional()
 });
 
+const idSchema = Joi.object({
+  id: Joi.number().integer().positive().required().messages({
+    'number.base': 'ID must be a number',
+    'number.integer': 'ID must be an integer',
+    'number.positive': 'ID must be positive',
+    'any.required': 'ID is required'
+  })
+});
+
 module.exports = {
   createLecturerSchema,
-  updateLecturerSchema
+  updateLecturerSchema,
+  idSchema
 };
