@@ -19,6 +19,7 @@ import {
   HiCalendar,
   HiBadgeCheck
 } from 'react-icons/hi';
+import { useQuery } from '@tanstack/react-query';
 import { useUI } from '@/app/contexts/UIContext';
 import { useAuth } from '@/app/lib/auth-context';
 import { api } from '@/app/lib/api';
