@@ -125,7 +125,7 @@ const CreateLecturerModal = ({ isOpen, onClose, onSuccess }) => {
         // Lecturer specific data
         lecturer: {
           staff_no: formData.staff_no.trim(),
-          department: formData.department || null,
+          department_id: formData.department || null,
           specialization: formData.specialization.trim(),
           qualification: formData.qualification.trim(),
           highest_degree: formData.highest_degree,
@@ -398,7 +398,7 @@ const CreateLecturerModal = ({ isOpen, onClose, onSuccess }) => {
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>
+                    <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>
                   ))}

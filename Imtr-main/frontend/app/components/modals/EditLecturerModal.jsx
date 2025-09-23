@@ -62,7 +62,7 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
         postal_code: lecturer.user?.profile?.postal_code || '',
         national_id: lecturer.user?.profile?.national_id || '',
         staff_no: lecturer.staff_no || '',
-        department: lecturer.department || '',
+        department: lecturer.department?.id || '',
         specialization: lecturer.specialization || '',
         qualification: lecturer.qualification || '',
         highest_degree: lecturer.highest_degree || '',
@@ -143,7 +143,7 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
         // Lecturer specific data
         lecturer: {
           staff_no: formData.staff_no.trim(),
-          department: formData.department || null,
+          department_id: formData.department || null,
           specialization: formData.specialization.trim(),
           qualification: formData.qualification.trim(),
           highest_degree: formData.highest_degree,
@@ -337,7 +337,7 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept) => (
-                    <option key={dept.id} value={dept.name}>
+                    <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>
                   ))}
