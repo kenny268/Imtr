@@ -206,7 +206,7 @@ const ViewLecturerModal = ({ isOpen, onClose, lecturer }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Department</label>
                   <p className="text-gray-900 dark:text-white">
-                    {lecturer.department || 'Not assigned'}
+                    {lecturer.department?.name || 'Not assigned'}
                   </p>
                 </div>
                 <div>

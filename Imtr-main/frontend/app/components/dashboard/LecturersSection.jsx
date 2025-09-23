@@ -240,7 +240,7 @@ const LecturersSection = () => {
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
           <HiOfficeBuilding className="h-4 w-4" />
-          <span>{lecturer.department || 'Not assigned'}</span>
+          <span>{lecturer.department?.name || 'Not assigned'}</span>
         </div>
       </div>
 
@@ -305,7 +305,7 @@ const LecturersSection = () => {
         {lecturer.specialization}
       </td>
       <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
-        {lecturer.department || 'Not assigned'}
+        {lecturer.department?.name || 'Not assigned'}
       </td>
       <td className="px-6 py-4">
         {getStatusBadge(lecturer.status)}
