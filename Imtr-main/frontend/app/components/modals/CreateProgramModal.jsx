@@ -45,7 +45,7 @@ const CreateProgramModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await api.get('/lecturers?limit=100');
       if (response.data.success) {
-        const data = response.data.data;
+        const data = response.data.message;
         if (Array.isArray(data)) {
           setLecturers(data);
         } else if (data && Array.isArray(data.lecturers)) {
