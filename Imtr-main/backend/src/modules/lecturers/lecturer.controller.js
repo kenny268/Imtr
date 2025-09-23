@@ -18,7 +18,7 @@ const getLecturers = async (req, res) => {
     }
 
     if (department) {
-      whereClause.department = department;
+      whereClause.department_id = department;
     }
 
     if (status) {
@@ -39,6 +39,12 @@ const getLecturers = async (req, res) => {
             attributes: ['first_name', 'last_name', 'middle_name', 'phone'],
             required: false
           }]
+        },
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name', 'code'],
+          required: false
         }
       ],
       limit: parseInt(limit),
@@ -81,6 +87,12 @@ const getLecturerById = async (req, res) => {
             attributes: ['first_name', 'last_name', 'middle_name', 'phone'],
             required: false
           }]
+        },
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name', 'code'],
+          required: false
         }
       ]
     });
