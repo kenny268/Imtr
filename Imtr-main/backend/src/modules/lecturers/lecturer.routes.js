@@ -17,6 +17,13 @@ const { createLecturerSchema, updateLecturerSchema, idSchema } = require('./lect
 // All routes require authentication
 router.use(authenticateToken);
 
+// Create new lecturer
+router.post('/',
+  requirePermission('lecturers:write'),
+  validateRequest(createLecturerSchema),
+  createLecturer
+);
+
 // Get all lecturers
 router.get('/',
   requirePermission('lecturers:read'),
@@ -28,13 +35,6 @@ router.get('/:id',
   requirePermission('lecturers:read'),
   validateParams(idSchema),
   getLecturerById
-);
-
-// Create new lecturer
-router.post('/',
-  requirePermission('lecturers:write'),
-  validateRequest(createLecturerSchema),
-  createLecturer
 );
 
 // Update lecturer
