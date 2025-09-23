@@ -88,6 +88,7 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
   const fetchDepartments = async () => {
     try {
       const response = await api.get('/departments?limit=100');
+      console.log('Department API Response:', response.data);
       if (response.data.success) {
         const data = response.data.data;
         if (Array.isArray(data)) {
@@ -109,6 +110,11 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
       fetchDepartments();
     }
   }, [isOpen]);
+
+  // Debug departments state
+  useEffect(() => {
+    console.log('Departments state updated:', departments);
+  }, [departments]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -321,6 +327,9 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
                   name="staff_no"
                   value={formData.staff_no}
                   onChange={handleInputChange}
+                  placeholder="LEC000001"
+                  pattern="^LEC\d{4,8}$"
+                  title="Staff number must start with LEC followed by 4-8 digits (e.g., LEC000001)"
                   required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
                 />
@@ -336,11 +345,15 @@ const EditLecturerModal = ({ isOpen, onClose, lecturer, onSuccess }) => {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
+                  {departments.length > 0 ? (
+                    departments.map((dept) => (
+                      <option key={dept.id} value={dept.id}>
+                        {dept.name} ({dept.code})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>Loading departments...</option>
+                  )}
                 </select>
               </div>
               <div>
