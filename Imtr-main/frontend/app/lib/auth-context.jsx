@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   const loginMutation = useMutation({
     mutationFn: (credentials) => api.post('/auth/login', credentials),
     onSuccess: (response) => {
-      const userData = response.data.data;
+      const userData = response.data.data.user;
       setUser(userData);
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       // Don't redirect here - let the page handle it
