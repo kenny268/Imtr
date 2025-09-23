@@ -123,7 +123,7 @@ const createLecturer = async (req, res) => {
     // Create user
     const user = await User.create({
       email,
-      password: hashedPassword,
+      password_hash: hashedPassword,
       role,
       status: 'active'
     });
@@ -133,6 +133,18 @@ const createLecturer = async (req, res) => {
       user_id: user.id,
       ...profile
     });
+
+    // Validate department_id if provided
+    if (lecturerData.department_id && lecturerData.department_id !== '') {
+      const departmentId = typeof lecturerData.department_id === 'string' ? parseInt(lecturerData.department_id, 10) : lecturerData.department_id;
+      const department = await Department.findByPk(departmentId);
+      if (!department) {
+        return sendError(res, 'Invalid department ID', 400);
+      }
+      lecturerData.department_id = departmentId;
+    } else {
+      lecturerData.department_id = null;
+    }
 
     // Create lecturer
     const lecturer = await Lecturer.create({

@@ -69,7 +69,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true,
       validate: {
-        is: /^LEC\d{6}$/
+        is: /^LEC\d{4,8}$/ // Allow 4-8 digits after LEC for flexibility
       }
     },
     department_id: {

@@ -38,12 +38,15 @@ const createLecturerSchema = Joi.object({
   }).required(),
   
   lecturer: Joi.object({
-    staff_no: Joi.string().trim().min(3).max(20).required().messages({
-      'string.min': 'Staff number must be at least 3 characters long',
-      'string.max': 'Staff number must not exceed 20 characters',
+    staff_no: Joi.string().trim().pattern(/^LEC\d{4,8}$/).required().messages({
+      'string.pattern.base': 'Staff number must start with LEC followed by 4-8 digits (e.g., LEC000001)',
       'any.required': 'Staff number is required'
     }),
-    department: Joi.string().trim().max(100).allow('', null).optional(),
+    department_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/),
+      Joi.valid(null, '')
+    ).optional(),
     specialization: Joi.string().trim().min(2).max(100).required().messages({
       'string.min': 'Specialization must be at least 2 characters long',
       'string.max': 'Specialization must not exceed 100 characters',
@@ -110,11 +113,14 @@ const updateLecturerSchema = Joi.object({
   }).optional(),
   
   lecturer: Joi.object({
-    staff_no: Joi.string().trim().min(3).max(20).optional().messages({
-      'string.min': 'Staff number must be at least 3 characters long',
-      'string.max': 'Staff number must not exceed 20 characters'
+    staff_no: Joi.string().trim().pattern(/^LEC\d{4,8}$/).optional().messages({
+      'string.pattern.base': 'Staff number must start with LEC followed by 4-8 digits (e.g., LEC000001)'
     }),
-    department: Joi.string().trim().max(100).allow('', null).optional(),
+    department_id: Joi.alternatives().try(
+      Joi.number().integer().positive(),
+      Joi.string().pattern(/^\d+$/),
+      Joi.valid(null, '')
+    ).optional(),
     specialization: Joi.string().trim().min(2).max(100).optional().messages({
       'string.min': 'Specialization must be at least 2 characters long',
       'string.max': 'Specialization must not exceed 100 characters'
