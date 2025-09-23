@@ -39,6 +39,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'coordinator_id',
         as: 'coordinatedPrograms'
       });
+
+      // Lecturer belongs to Department
+      Lecturer.belongsTo(models.Department, {
+        foreignKey: 'department_id',
+        as: 'department'
+      });
     }
   }
 
@@ -66,9 +72,15 @@ module.exports = (sequelize, DataTypes) => {
         is: /^LEC\d{6}$/
       }
     },
-    department: {
-      type: DataTypes.STRING(100),
-      allowNull: true
+    department_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'departments',
+        key: 'id'
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'SET NULL'
     },
     specialization: {
       type: DataTypes.STRING(255),
@@ -204,7 +216,7 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['staff_no']
       },
       {
-        fields: ['department']
+        fields: ['department_id']
       },
       {
         fields: ['status']
