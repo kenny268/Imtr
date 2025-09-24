@@ -38,6 +38,13 @@ import EditUserModal from '@/app/components/modals/EditUserModal';
 import DeleteUserModal from '@/app/components/modals/DeleteUserModal';
 import CreateProgramModal from '@/app/components/modals/CreateProgramModal';
 import CreateCourseModal from '@/app/components/modals/CreateCourseModal';
+import EditCourseModal from '@/app/components/modals/EditCourseModal';
+import ViewCourseModal from '@/app/components/modals/ViewCourseModal';
+import DeleteCourseModal from '@/app/components/modals/DeleteCourseModal';
+import CreateAssessmentModal from '@/app/components/modals/CreateAssessmentModal';
+import EditAssessmentModal from '@/app/components/modals/EditAssessmentModal';
+import ViewAssessmentModal from '@/app/components/modals/ViewAssessmentModal';
+import DeleteAssessmentModal from '@/app/components/modals/DeleteAssessmentModal';
 import ViewProgramModal from '@/app/components/modals/ViewProgramModal';
 import EditProgramModal from '@/app/components/modals/EditProgramModal';
 import DeleteProgramModal from '@/app/components/modals/DeleteProgramModal';
@@ -51,6 +58,7 @@ import StudentsSection from './StudentsSection';
 import UserManagementSection from './UserManagementSection';
 import ProgramsSection from './ProgramsSection';
 import CoursesSection from './CoursesSection';
+import ExaminationsSection from './ExaminationsSection';
 import FacultyDepartmentSection from './FacultyDepartmentSection';
 import LecturersSection from './LecturersSection';
 
@@ -61,6 +69,7 @@ const AdminDashboard = ({ activeMenu }) => {
   const [users, setUsers] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [assessments, setAssessments] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -77,11 +86,19 @@ const AdminDashboard = ({ activeMenu }) => {
   // Modal states for programs and courses
   const [showCreateProgramModal, setShowCreateProgramModal] = useState(false);
   const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [showViewCourseModal, setShowViewCourseModal] = useState(false);
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+  const [showDeleteCourseModal, setShowDeleteCourseModal] = useState(false);
+  const [showCreateAssessmentModal, setShowCreateAssessmentModal] = useState(false);
+  const [showViewAssessmentModal, setShowViewAssessmentModal] = useState(false);
+  const [showEditAssessmentModal, setShowEditAssessmentModal] = useState(false);
+  const [showDeleteAssessmentModal, setShowDeleteAssessmentModal] = useState(false);
   const [showViewProgramModal, setShowViewProgramModal] = useState(false);
   const [showEditProgramModal, setShowEditProgramModal] = useState(false);
   const [showDeleteProgramModal, setShowDeleteProgramModal] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [dashboardStats, setDashboardStats] = useState({
     totalStudents: 0,
     totalLecturers: 0,
@@ -113,6 +130,12 @@ const AdminDashboard = ({ activeMenu }) => {
     total_pages: 0
   });
   const [coursePagination, setCoursePagination] = useState({
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    total_pages: 0
+  });
+  const [assessmentPagination, setAssessmentPagination] = useState({
     current_page: 1,
     per_page: 20,
     total: 0,
@@ -179,6 +202,20 @@ const AdminDashboard = ({ activeMenu }) => {
     sortOrder: 'DESC'
   });
   const [courseViewMode, setCourseViewMode] = useState('table'); // 'table' or 'grid'
+
+  // Assessment management filters and view mode
+  const [assessmentFilters, setAssessmentFilters] = useState({
+    search: '',
+    type: '',
+    status: '',
+    class_section_id: '',
+    lecturer_id: '',
+    academic_year: '',
+    semester: '',
+    sortBy: 'created_at',
+    sortOrder: 'DESC'
+  });
+  const [assessmentViewMode, setAssessmentViewMode] = useState('table'); // 'table' or 'grid'
 
   // Faculty management filters and view mode
   const [facultyFilters, setFacultyFilters] = useState({
@@ -383,6 +420,82 @@ const AdminDashboard = ({ activeMenu }) => {
   // Refresh courses
   const refreshCourses = () => {
     fetchCourses(coursePagination.current_page, courseFilters);
+  };
+
+  // Fetch courses
+  const fetchCourses = async (page = 1, filters = courseFilters) => {
+    if (!hasPermission('courses:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.program_id && { program_id: filters.program_id }),
+        ...(filters.semester && { semester: filters.semester }),
+        ...(filters.year && { year: filters.year }),
+        ...(filters.course_type && { course_type: filters.course_type }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.is_offered && { is_offered: filters.is_offered }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/courses?${queryParams}`);
+      if (response.data.success) {
+        setCourses(response.data.data.courses || []);
+        setCoursePagination(response.data.data.pagination || coursePagination);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Assessment filter change handler
+  const handleAssessmentFilterChange = (key, value) => {
+    const newFilters = { ...assessmentFilters, [key]: value };
+    setAssessmentFilters(newFilters);
+    fetchAssessments(1, newFilters);
+  };
+
+  // Refresh assessments
+  const refreshAssessments = () => {
+    fetchAssessments(assessmentPagination.current_page, assessmentFilters);
+  };
+
+  // Fetch assessments
+  const fetchAssessments = async (page = 1, filters = assessmentFilters) => {
+    if (!hasPermission('assessments:read')) return;
+    
+    try {
+      setLoading(true);
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '20',
+        ...(filters.search && { search: filters.search }),
+        ...(filters.type && { type: filters.type }),
+        ...(filters.status && { status: filters.status }),
+        ...(filters.class_section_id && { class_section_id: filters.class_section_id }),
+        ...(filters.lecturer_id && { lecturer_id: filters.lecturer_id }),
+        ...(filters.academic_year && { academic_year: filters.academic_year }),
+        ...(filters.semester && { semester: filters.semester }),
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder
+      });
+
+      const response = await api.get(`/assessments?${queryParams}`);
+      if (response.data.success) {
+        setAssessments(response.data.data.assessments || []);
+        setAssessmentPagination(response.data.data.pagination || assessmentPagination);
+      }
+    } catch (error) {
+      console.error('Error fetching assessments:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Fetch faculties
@@ -803,9 +916,9 @@ const AdminDashboard = ({ activeMenu }) => {
               courseViewMode={courseViewMode}
               hasPermission={hasPermission}
               setShowCreateCourseModal={setShowCreateCourseModal}
-              setShowViewModal={setShowViewModal}
-              setShowEditModal={setShowEditModal}
-              setShowDeleteModal={setShowDeleteModal}
+              setShowViewModal={setShowViewCourseModal}
+              setShowEditModal={setShowEditCourseModal}
+              setShowDeleteModal={setShowDeleteCourseModal}
               setSelectedCourse={setSelectedCourse}
               handleCourseFilterChange={handleCourseFilterChange}
               refreshCourses={refreshCourses}
@@ -818,6 +931,29 @@ const AdminDashboard = ({ activeMenu }) => {
               onSuccess={() => {
                 refreshCourses();
                 setShowCreateCourseModal(false);
+              }}
+            />
+            <ViewCourseModal
+              isOpen={showViewCourseModal}
+              onClose={() => setShowViewCourseModal(false)}
+              course={selectedCourse}
+            />
+            <EditCourseModal
+              isOpen={showEditCourseModal}
+              onClose={() => setShowEditCourseModal(false)}
+              course={selectedCourse}
+              onSuccess={() => {
+                refreshCourses();
+                setShowEditCourseModal(false);
+              }}
+            />
+            <DeleteCourseModal
+              isOpen={showDeleteCourseModal}
+              onClose={() => setShowDeleteCourseModal(false)}
+              course={selectedCourse}
+              onSuccess={() => {
+                refreshCourses();
+                setShowDeleteCourseModal(false);
               }}
             />
           </>
@@ -1184,17 +1320,110 @@ const AdminDashboard = ({ activeMenu }) => {
 
       case 'courses':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Courses</h1>
-              <button className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors">
-                Add Course
-              </button>
-            </div>
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-6 shadow-soft dark:shadow-soft-dark">
-              <p className="text-gray-600 dark:text-gray-400">Course management content will be implemented here.</p>
-            </div>
-          </div>
+          <>
+            <CoursesSection
+              courses={courses}
+              loading={loading}
+              pagination={coursePagination}
+              courseFilters={courseFilters}
+              courseViewMode={courseViewMode}
+              hasPermission={hasPermission}
+              setShowCreateCourseModal={setShowCreateCourseModal}
+              setShowViewModal={setShowViewCourseModal}
+              setShowEditModal={setShowEditCourseModal}
+              setShowDeleteModal={setShowDeleteCourseModal}
+              setSelectedCourse={setSelectedCourse}
+              handleCourseFilterChange={handleCourseFilterChange}
+              refreshCourses={refreshCourses}
+              fetchCourses={fetchCourses}
+              setCourseViewMode={setCourseViewMode}
+            />
+            <CreateCourseModal
+              isOpen={showCreateCourseModal}
+              onClose={() => setShowCreateCourseModal(false)}
+              onSuccess={() => {
+                refreshCourses();
+                setShowCreateCourseModal(false);
+              }}
+            />
+            <ViewCourseModal
+              isOpen={showViewCourseModal}
+              onClose={() => setShowViewCourseModal(false)}
+              course={selectedCourse}
+            />
+            <EditCourseModal
+              isOpen={showEditCourseModal}
+              onClose={() => setShowEditCourseModal(false)}
+              course={selectedCourse}
+              onSuccess={() => {
+                refreshCourses();
+                setShowEditCourseModal(false);
+              }}
+            />
+            <DeleteCourseModal
+              isOpen={showDeleteCourseModal}
+              onClose={() => setShowDeleteCourseModal(false)}
+              course={selectedCourse}
+              onSuccess={() => {
+                refreshCourses();
+                setShowDeleteCourseModal(false);
+              }}
+            />
+          </>
+        );
+
+      case 'examinations':
+        return (
+          <>
+            <ExaminationsSection
+              assessments={assessments}
+              loading={loading}
+              pagination={assessmentPagination}
+              assessmentFilters={assessmentFilters}
+              assessmentViewMode={assessmentViewMode}
+              hasPermission={hasPermission}
+              setShowCreateAssessmentModal={setShowCreateAssessmentModal}
+              setShowViewModal={setShowViewAssessmentModal}
+              setShowEditModal={setShowEditAssessmentModal}
+              setShowDeleteModal={setShowDeleteAssessmentModal}
+              setSelectedAssessment={setSelectedAssessment}
+              handleAssessmentFilterChange={handleAssessmentFilterChange}
+              refreshAssessments={refreshAssessments}
+              fetchAssessments={fetchAssessments}
+              setAssessmentViewMode={setAssessmentViewMode}
+            />
+            <CreateAssessmentModal
+              isOpen={showCreateAssessmentModal}
+              onClose={() => setShowCreateAssessmentModal(false)}
+              onSuccess={() => {
+                refreshAssessments();
+                setShowCreateAssessmentModal(false);
+              }}
+            />
+            <ViewAssessmentModal
+              isOpen={showViewAssessmentModal}
+              onClose={() => setShowViewAssessmentModal(false)}
+              assessment={selectedAssessment}
+            />
+            <EditAssessmentModal
+              isOpen={showEditAssessmentModal}
+              onClose={() => setShowEditAssessmentModal(false)}
+              assessment={selectedAssessment}
+              onSuccess={() => {
+                refreshAssessments();
+                setShowEditAssessmentModal(false);
+              }}
+            />
+            <DeleteAssessmentModal
+              isOpen={showDeleteAssessmentModal}
+              onClose={() => setShowDeleteAssessmentModal(false)}
+              assessment={selectedAssessment}
+              onSuccess={() => {
+                refreshAssessments();
+                setShowDeleteAssessmentModal(false);
+              }}
+            />
+          </>
         );
 
       case 'finance':

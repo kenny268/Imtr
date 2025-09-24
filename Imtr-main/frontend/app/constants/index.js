@@ -17,6 +17,7 @@ export const MENU_ITEMS = {
     { id: 'lecturers', label: 'Lecturers', icon: 'HiUserGroup', path: '/lecturers' },
     { id: 'programs', label: 'Programs', icon: 'HiBookOpen', path: '/programs' },
     { id: 'courses', label: 'Courses', icon: 'HiCollection', path: '/courses' },
+    { id: 'examinations', label: 'Examinations', icon: 'HiClipboardList', path: '/examinations' },
     { id: 'faculty-departments', label: 'Faculty & Departments', icon: 'HiOfficeBuilding', path: '/faculty-departments' },
     { id: 'finance', label: 'Finance', icon: 'HiCurrencyDollar', path: '/finance' },
     { id: 'library', label: 'Library', icon: 'HiLibrary', path: '/library' },
