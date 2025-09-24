@@ -12,6 +12,7 @@ const courseRoutes = require('./modules/courses/course.routes');
 const facultyRoutes = require('./modules/faculties/faculty.routes');
 const departmentRoutes = require('./modules/departments/department.routes');
 const lecturerRoutes = require('./modules/lecturers/lecturer.routes');
+const assessmentRoutes = require('./modules/assessments/assessment.routes');
 const academicRoutes = require('./modules/academics/academic.routes');
 const financeRoutes = require('./modules/finance/finance.routes');
 const libraryRoutes = require('./modules/library/library.routes');
@@ -30,6 +31,7 @@ router.use('/courses', courseRoutes);
 router.use('/faculties', facultyRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/lecturers', lecturerRoutes);
+router.use('/assessments', assessmentRoutes);
 router.use('/academics', academicRoutes);
 router.use('/finance', financeRoutes);
 router.use('/library', libraryRoutes);
@@ -49,6 +51,7 @@ router.get('/', (req, res) => {
       students: '/students',
       programs: '/programs',
       courses: '/courses',
+      assessments: '/assessments',
       academics: '/academics',
       finance: '/finance',
       library: '/library',

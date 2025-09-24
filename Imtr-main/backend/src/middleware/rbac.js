@@ -27,6 +27,10 @@ const ROLE_PERMISSIONS = {
     'courses:read', 'courses:write', 'courses:delete',
     'courses:assign_lecturers', 'courses:manage_sections',
     
+    // Assessment management
+    'assessments:read', 'assessments:write', 'assessments:delete',
+    'assessments:grade', 'assessments:publish', 'assessments:statistics',
+    
     // Academic management
     'academics:read', 'academics:write', 'academics:delete',
     'academics:attendance', 'academics:grades', 'academics:exams',
@@ -67,6 +71,10 @@ const ROLE_PERMISSIONS = {
     
     // Course management (own courses)
     'courses:read', 'courses:write_own',
+    
+    // Assessment management (own assessments)
+    'assessments:read', 'assessments:write_own', 'assessments:grade_own',
+    'assessments:publish_own', 'assessments:statistics_own',
     
     // Academic management (own sections)
     'academics:read', 'academics:write_own',
