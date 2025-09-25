@@ -1,5 +1,5 @@
 const { Assessment, ClassSection, Lecturer, Course, Program, Student, Grade, User, Profile } = require('../../models');
-const { AppError } = require('../../utils/errorHandler');
+const { AppError } = require('../../middleware/errorHandler');
 const { Op } = require('sequelize');
 
 class AssessmentService {

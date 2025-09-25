@@ -1,5 +1,5 @@
 const assessmentService = require('./assessment.service');
-const { sendSuccess, sendError } = require('../../utils/responseHandler');
+const { sendSuccess, sendError } = require('../../utils/responses');
 const { logger } = require('../../config/logger');
 
 // Create a new assessment
