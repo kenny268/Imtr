@@ -86,10 +86,13 @@ class CourseController {
   // Get class sections
   async getClassSections(req, res) {
     try {
+      console.log('getClassSections called with query:', req.query);
       const result = await courseService.getClassSections(req.query);
+      console.log('Service result:', result);
       sendSuccess(res, result, 'Class sections retrieved successfully');
     } catch (error) {
-      sendError(res, error);
+      console.error('Error in getClassSections controller:', error);
+      sendError(res, error.message, error.statusCode || 500, error.errors);
     }
   }
 }
