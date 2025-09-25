@@ -408,6 +408,73 @@ class CourseService {
 
     return courses;
   }
+
+  // Get class sections
+  async getClassSections(queryParams = {}) {
+    const { limit = 100, page = 1, search, status, academic_year, semester } = queryParams;
+    const offset = (page - 1) * limit;
+
+    const whereClause = {};
+    if (search) {
+      whereClause[Op.or] = [
+        { section_code: { [Op.iLike]: `%${search}%` } },
+        { room: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+    if (status) {
+      whereClause.status = status;
+    }
+    if (academic_year) {
+      whereClause.academic_year = academic_year;
+    }
+    if (semester) {
+      whereClause.semester = semester;
+    }
+
+    const { count, rows } = await ClassSection.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'code', 'title', 'credits'],
+          include: [{
+            model: Program,
+            as: 'program',
+            attributes: ['id', 'name', 'code']
+          }]
+        },
+        {
+          model: Lecturer,
+          as: 'lecturer',
+          attributes: ['id', 'staff_no'],
+          include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id', 'email'],
+            include: [{
+              model: Profile,
+              as: 'profile',
+              attributes: ['first_name', 'last_name']
+            }]
+          }]
+        }
+      ],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      order: [['academic_year', 'DESC'], ['semester', 'ASC'], ['section_code', 'ASC']]
+    });
+
+    return {
+      class_sections: rows,
+      pagination: {
+        current_page: parseInt(page),
+        total_pages: Math.ceil(count / limit),
+        total_items: count,
+        items_per_page: parseInt(limit)
+      }
+    };
+  }
 }
 
 module.exports = new CourseService();

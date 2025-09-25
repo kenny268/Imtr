@@ -82,6 +82,16 @@ class CourseController {
       sendError(res, error);
     }
   }
+
+  // Get class sections
+  async getClassSections(req, res) {
+    try {
+      const result = await courseService.getClassSections(req.query);
+      sendSuccess(res, result, 'Class sections retrieved successfully');
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
 }
 
 module.exports = new CourseController();

@@ -12,6 +12,12 @@ router.use(authenticateToken);
 // Get course options (for dropdowns) - accessible by all authenticated users
 router.get('/options', courseController.getCourseOptions);
 
+// Get class sections - admin and lecturer access
+router.get('/sections',
+  authorize(['ADMIN', 'LECTURER']),
+  courseController.getClassSections
+);
+
 // Get course statistics - admin only
 router.get('/statistics',
   authorize('ADMIN'),
