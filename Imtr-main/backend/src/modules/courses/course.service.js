@@ -417,8 +417,8 @@ class CourseService {
     const whereClause = {};
     if (search) {
       whereClause[Op.or] = [
-        { section_code: { [Op.iLike]: `%${search}%` } },
-        { room: { [Op.iLike]: `%${search}%` } }
+        { section_code: { [Op.like]: `%${search}%` } },
+        { room: { [Op.like]: `%${search}%` } }
       ];
     }
     if (status) {
