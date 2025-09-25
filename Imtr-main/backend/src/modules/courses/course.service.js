@@ -169,13 +169,21 @@ class CourseService {
         {
           model: Program,
           as: 'program',
-          attributes: ['id', 'name', 'code', 'level', 'department', 'faculty']
-        },
-        {
-          model: Course,
-          as: 'prerequisiteCourses',
-          attributes: ['id', 'code', 'title', 'credits'],
-          through: { attributes: [] }
+          attributes: ['id', 'name', 'code', 'level', 'department_id', 'faculty_id'],
+          include: [
+            {
+              model: require('../../models').Department,
+              as: 'department',
+              attributes: ['id', 'name', 'code'],
+              required: false
+            },
+            {
+              model: require('../../models').Faculty,
+              as: 'faculty',
+              attributes: ['id', 'name', 'code'],
+              required: false
+            }
+          ]
         },
         {
           model: ClassSection,
