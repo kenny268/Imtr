@@ -1,4 +1,4 @@
-const { Course, Program, Lecturer, ClassSection, Enrollment } = require('../../models');
+const { Course, Program, Lecturer, ClassSection, Enrollment, User, Profile } = require('../../models');
 const { Op } = require('sequelize');
 const { NotFoundError, ConflictError, AppError } = require('../../middleware/errorHandler');
 
@@ -431,49 +431,41 @@ class CourseService {
       whereClause.semester = semester;
     }
 
-    const { count, rows } = await ClassSection.findAndCountAll({
-      where: whereClause,
-      include: [
-        {
-          model: Course,
-          as: 'course',
-          attributes: ['id', 'code', 'title', 'credits'],
-          include: [{
-            model: Program,
-            as: 'program',
-            attributes: ['id', 'name', 'code']
-          }]
-        },
-        {
-          model: Lecturer,
-          as: 'lecturer',
-          attributes: ['id', 'staff_no'],
-          include: [{
-            model: User,
-            as: 'user',
-            attributes: ['id', 'email'],
-            include: [{
-              model: Profile,
-              as: 'profile',
-              attributes: ['first_name', 'last_name']
-            }]
-          }]
-        }
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['academic_year', 'DESC'], ['semester', 'ASC'], ['section_code', 'ASC']]
-    });
+    try {
+      const { count, rows } = await ClassSection.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: Course,
+            as: 'course',
+            attributes: ['id', 'code', 'title', 'credits'],
+            required: false
+          },
+          {
+            model: Lecturer,
+            as: 'lecturer',
+            attributes: ['id', 'staff_no'],
+            required: false
+          }
+        ],
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['academic_year', 'DESC'], ['semester', 'ASC'], ['section_code', 'ASC']]
+      });
 
-    return {
-      class_sections: rows,
-      pagination: {
-        current_page: parseInt(page),
-        total_pages: Math.ceil(count / limit),
-        total_items: count,
-        items_per_page: parseInt(limit)
-      }
-    };
+      return {
+        class_sections: rows,
+        pagination: {
+          current_page: parseInt(page),
+          total_pages: Math.ceil(count / limit),
+          total_items: count,
+          items_per_page: parseInt(limit)
+        }
+      };
+    } catch (error) {
+      console.error('Error in getClassSections:', error);
+      throw error;
+    }
   }
 }
 
