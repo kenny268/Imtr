@@ -341,14 +341,20 @@ class ProgramService {
     // Programs by department
     const programsByDepartment = await Program.findAll({
       attributes: [
-        'department',
+        'department_id',
         [Program.sequelize.fn('COUNT', Program.sequelize.col('Program.id')), 'count']
       ],
-      where: { department: { [Op.ne]: null } },
-      group: ['department'],
+      include: [{
+        model: Department,
+        as: 'department',
+        attributes: ['name', 'code'],
+        required: false
+      }],
+      where: { department_id: { [Op.ne]: null } },
+      group: ['department_id', 'department.id'],
       order: [[Program.sequelize.fn('COUNT', Program.sequelize.col('Program.id')), 'DESC']],
       limit: 10,
-      raw: true
+      raw: false
     });
 
     // Programs by faculty
@@ -380,7 +386,13 @@ class ProgramService {
   async getProgramOptions() {
     const programs = await Program.findAll({
       where: { status: 'active' },
-      attributes: ['id', 'name', 'code', 'level', 'department'],
+      attributes: ['id', 'name', 'code', 'level', 'department_id'],
+      include: [{
+        model: Department,
+        as: 'department',
+        attributes: ['id', 'name', 'code'],
+        required: false
+      }],
       order: [['name', 'ASC']]
     });
 
