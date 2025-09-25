@@ -422,37 +422,6 @@ const AdminDashboard = ({ activeMenu }) => {
     fetchCourses(coursePagination.current_page, courseFilters);
   };
 
-  // Fetch courses
-  const fetchCourses = async (page = 1, filters = courseFilters) => {
-    if (!hasPermission('courses:read')) return;
-    
-    try {
-      setLoading(true);
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '20',
-        ...(filters.search && { search: filters.search }),
-        ...(filters.program_id && { program_id: filters.program_id }),
-        ...(filters.semester && { semester: filters.semester }),
-        ...(filters.year && { year: filters.year }),
-        ...(filters.course_type && { course_type: filters.course_type }),
-        ...(filters.status && { status: filters.status }),
-        ...(filters.is_offered && { is_offered: filters.is_offered }),
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder
-      });
-
-      const response = await api.get(`/courses?${queryParams}`);
-      if (response.data.success) {
-        setCourses(response.data.data.courses || []);
-        setCoursePagination(response.data.data.pagination || coursePagination);
-      }
-    } catch (error) {
-      console.error('Error fetching courses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Assessment filter change handler
   const handleAssessmentFilterChange = (key, value) => {
