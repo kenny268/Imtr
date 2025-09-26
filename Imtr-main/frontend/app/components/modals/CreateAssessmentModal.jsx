@@ -35,7 +35,7 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const response = await api.get('/courses/sections?limit=100');
       if (response.data.success) {
-        setClassSections(response.data.data || []);
+        setClassSections(response.data.data.class_sections || []);
       }
     } catch (error) {
       console.error('Error fetching class sections:', error);

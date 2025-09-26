@@ -189,6 +189,8 @@ export const AuthProvider = ({ children }) => {
         'faculties:read', 'faculties:write', 'faculties:delete',
         'departments:read', 'departments:write', 'departments:delete',
         'lecturers:read', 'lecturers:write', 'lecturers:delete',
+        'assessments:read', 'assessments:write', 'assessments:delete',
+        'assessments:grade', 'assessments:publish', 'assessments:statistics',
         'finance:read', 'finance:write',
         'reports:read', 'reports:write',
         'system:admin'
@@ -200,6 +202,8 @@ export const AuthProvider = ({ children }) => {
         'faculties:read',
         'departments:read',
         'lecturers:read',
+        'assessments:read', 'assessments:write_own', 'assessments:grade_own',
+        'assessments:publish_own', 'assessments:statistics_own',
         'attendance:read', 'attendance:write',
         'grades:read', 'grades:write',
         'research:read', 'research:write'

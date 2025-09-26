@@ -437,7 +437,13 @@ const AdminDashboard = ({ activeMenu }) => {
 
   // Fetch assessments
   const fetchAssessments = async (page = 1, filters = assessmentFilters) => {
-    if (!hasPermission('assessments:read')) return;
+    console.log('fetchAssessments called with:', { page, filters });
+    console.log('hasPermission assessments:read:', hasPermission('assessments:read'));
+    
+    if (!hasPermission('assessments:read')) {
+      console.log('No permission for assessments:read');
+      return;
+    }
     
     try {
       setLoading(true);
@@ -455,10 +461,14 @@ const AdminDashboard = ({ activeMenu }) => {
         sortOrder: filters.sortOrder
       });
 
+      console.log('Making API call to:', `/assessments?${queryParams}`);
       const response = await api.get(`/assessments?${queryParams}`);
+      console.log('Assessments API response:', response.data);
+      
       if (response.data.success) {
         setAssessments(response.data.data.assessments || []);
         setAssessmentPagination(response.data.data.pagination || assessmentPagination);
+        console.log('Assessments set:', response.data.data.assessments?.length || 0);
       }
     } catch (error) {
       console.error('Error fetching assessments:', error);
@@ -644,6 +654,8 @@ const AdminDashboard = ({ activeMenu }) => {
       fetchPrograms();
     } else if (activeMenu === 'courses') {
       fetchCourses();
+    } else if (activeMenu === 'examinations') {
+      fetchAssessments();
     } else if (activeMenu === 'faculty-departments') {
       fetchFaculties();
       fetchDepartments();

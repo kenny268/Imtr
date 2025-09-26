@@ -27,8 +27,8 @@ const config = {
   jwt: {
     secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key',
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '24h',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d'
   },
 
   // Cookie Configuration
@@ -48,7 +48,7 @@ const config = {
   // Rate Limiting
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000
   },
 
   // File Upload Configuration
