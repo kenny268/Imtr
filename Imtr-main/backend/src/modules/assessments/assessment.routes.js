@@ -16,63 +16,64 @@ const {
 
 const { validate } = require('../../middleware/validate');
 const { assessmentSchemas } = require('./assessment.validation');
-const { authenticateToken, authorize } = require('../../middleware/auth');
+const { authenticateToken } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/rbac');
 
 // Apply authentication to all routes
 router.use(authenticateToken);
 
 // Assessment CRUD operations
 router.post('/', 
-  authorize(['assessments:write']),
+  requirePermission('assessments:write'),
   validate(assessmentSchemas.create, 'body'),
   createAssessment
 );
 
 router.get('/', 
-  authorize(['assessments:read']),
+  requirePermission('assessments:read'),
   getAssessments
 );
 
 router.get('/statistics', 
-  authorize(['assessments:read']),
+  requirePermission('assessments:read'),
   getAssessmentStatistics
 );
 
 router.get('/options', 
-  authorize(['assessments:read']),
+  requirePermission('assessments:read'),
   getAssessmentOptions
 );
 
 router.get('/:id', 
-  authorize(['assessments:read']),
+  requirePermission('assessments:read'),
   getAssessmentById
 );
 
 router.put('/:id', 
-  authorize(['assessments:write']),
+  requirePermission('assessments:write'),
   validate(assessmentSchemas.update, 'body'),
   updateAssessment
 );
 
 router.delete('/:id', 
-  authorize(['assessments:delete']),
+  requirePermission('assessments:delete'),
   deleteAssessment
 );
 
 // Assessment management operations
 router.patch('/:id/publish', 
-  authorize(['assessments:write']),
+  requirePermission('assessments:write'),
   publishAssessment
 );
 
 // Grade management
 router.post('/:id/grades', 
-  authorize(['assessments:write']),
+  requirePermission('assessments:write'),
   gradeAssessment
 );
 
 router.get('/:id/grades', 
-  authorize(['assessments:read']),
+  requirePermission('assessments:read'),
   getStudentGrades
 );
 
