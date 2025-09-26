@@ -63,7 +63,7 @@ const EditAssessmentModal = ({ isOpen, onClose, assessment, onSuccess }) => {
     try {
       const response = await api.get('/lecturers?limit=100');
       if (response.data.success) {
-        setLecturers(response.data.data || []);
+        setLecturers(response.data.data.lecturers || []);
       }
     } catch (error) {
       console.error('Error fetching lecturers:', error);
