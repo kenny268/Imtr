@@ -14,7 +14,7 @@ router.get('/options', courseController.getCourseOptions);
 
 // Get class sections - admin and lecturer access
 router.get('/sections',
-  // authorize(['ADMIN', 'LECTURER']), // Temporarily disabled for debugging
+  authorize(['ADMIN', 'LECTURER']),
   courseController.getClassSections
 );
 
