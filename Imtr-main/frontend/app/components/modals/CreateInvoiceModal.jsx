@@ -7,11 +7,13 @@ import { api } from '@/app/lib/api';
 
 const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [programs, setPrograms] = useState([]);
   const [students, setStudents] = useState([]);
   const [formData, setFormData] = useState({
-    student_id: '',
+    program_id: '',
+    student_id: '', // Optional - for individual student or leave empty for all students in program
     due_date: '',
-    fee_type: 'program_fees', // New field for fee type
+    fee_type: 'program_fees',
     notes: '',
     items: [
       {
@@ -22,20 +24,35 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     ]
   });
 
-  const [studentFeeInfo, setStudentFeeInfo] = useState(null);
-  const [loadingStudentInfo, setLoadingStudentInfo] = useState(false);
+  const [programFeeInfo, setProgramFeeInfo] = useState(null);
+  const [loadingProgramInfo, setLoadingProgramInfo] = useState(false);
 
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (isOpen) {
-      fetchStudents();
+      fetchPrograms();
     }
   }, [isOpen]);
 
-  const fetchStudents = async () => {
+  const fetchPrograms = async () => {
     try {
-      const response = await api.get('/students?limit=100');
+      const response = await api.get('/programs?limit=100');
+      if (response.data.success) {
+        setPrograms(response.data.data.programs || []);
+      }
+    } catch (error) {
+      console.error('Error fetching programs:', error);
+    }
+  };
+
+  const fetchStudents = async (programId) => {
+    if (!programId) {
+      setStudents([]);
+      return;
+    }
+    try {
+      const response = await api.get(`/students?program_id=${programId}&limit=100`);
       if (response.data.success) {
         setStudents(response.data.data.students || []);
       }
@@ -44,42 +61,36 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
-  const fetchStudentFeeInfo = async (studentId) => {
-    if (!studentId) {
-      setStudentFeeInfo(null);
+  const fetchProgramFeeInfo = async (programId) => {
+    if (!programId) {
+      setProgramFeeInfo(null);
       return;
     }
 
-    setLoadingStudentInfo(true);
+    setLoadingProgramInfo(true);
     try {
-      const response = await api.get(`/finance/students/${studentId}/fee-info`);
+      const response = await api.get(`/finance/fee-structures?program_id=${programId}`);
       if (response.data.success) {
-        setStudentFeeInfo(response.data.data);
+        setProgramFeeInfo(response.data.data);
         // Auto-populate items based on fee type
         populateItemsFromFeeInfo(response.data.data, formData.fee_type);
       }
     } catch (error) {
-      console.error('Error fetching student fee info:', error);
-      setStudentFeeInfo(null);
+      console.error('Error fetching program fee info:', error);
+      setProgramFeeInfo(null);
     } finally {
-      setLoadingStudentInfo(false);
+      setLoadingProgramInfo(false);
     }
   };
 
-  const populateItemsFromFeeInfo = (feeInfo, feeType) => {
+  const populateItemsFromFeeInfo = (feeStructures, feeType) => {
     let items = [];
 
-    if (feeType === 'program_fees' && feeInfo.feeStructures) {
-      items = feeInfo.feeStructures.map(fee => ({
+    if (feeType === 'program_fees' && feeStructures) {
+      items = feeStructures.map(fee => ({
         item: fee.item,
         amount_kes: fee.amount_kes,
-        description: fee.description || `Program fee for ${feeInfo.student.program.name}`
-      }));
-    } else if (feeType === 'course_fees' && feeInfo.student.enrollments) {
-      items = feeInfo.student.enrollments.map(enrollment => ({
-        item: `${enrollment.classSection.course.name} (${enrollment.classSection.course.code})`,
-        amount_kes: enrollment.classSection.course.credits * 1000, // 1000 KES per credit
-        description: `Course fee for ${enrollment.classSection.course.name} - ${enrollment.classSection.course.credits} credits`
+        description: fee.description || `Program fee for ${fee.program?.name || 'Program'}`
       }));
     }
 
@@ -105,14 +116,15 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       }));
     }
 
-    // Fetch student fee info when student is selected
-    if (field === 'student_id') {
-      fetchStudentFeeInfo(value);
+    // Fetch program fee info when program is selected
+    if (field === 'program_id') {
+      fetchProgramFeeInfo(value);
+      fetchStudents(value);
     }
 
     // Re-populate items when fee type changes
-    if (field === 'fee_type' && studentFeeInfo) {
-      populateItemsFromFeeInfo(studentFeeInfo, value);
+    if (field === 'fee_type' && programFeeInfo) {
+      populateItemsFromFeeInfo(programFeeInfo, value);
     }
   };
 
@@ -158,8 +170,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.student_id) {
-      newErrors.student_id = 'Student is required';
+    if (!formData.program_id) {
+      newErrors.program_id = 'Program is required';
     }
 
     if (!formData.due_date) {
@@ -189,14 +201,29 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       setLoading(true);
       
-      const response = await api.post('/finance/invoices', formData);
+      let response;
+      
+      if (formData.student_id) {
+        // Generate invoice for specific student
+        response = await api.post('/finance/invoices', formData);
+      } else {
+        // Generate invoices for all students in program
+        const payload = {
+          due_date: formData.due_date,
+          notes: formData.notes,
+          student_ids: [] // Empty array means all students in program
+        };
+        response = await api.post(`/finance/programs/${formData.program_id}/generate-invoices`, payload);
+      }
       
       if (response.data.success) {
         onSuccess();
         onClose();
         setFormData({
+          program_id: '',
           student_id: '',
           due_date: '',
+          fee_type: 'program_fees',
           notes: '',
           items: [
             {
@@ -207,6 +234,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
           ]
         });
         setErrors({});
+        setProgramFeeInfo(null);
+        setStudents([]);
       }
     } catch (error) {
       console.error('Error creating invoice:', error);
@@ -243,29 +272,53 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Student Selection */}
+          {/* Program Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Student *
+              Program *
             </label>
             <select
-              value={formData.student_id}
-              onChange={(e) => handleChange('student_id', e.target.value)}
+              value={formData.program_id}
+              onChange={(e) => handleChange('program_id', e.target.value)}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white ${
-                errors.student_id ? 'border-red-500' : 'border-gray-300 dark:border-dark-600'
+                errors.program_id ? 'border-red-500' : 'border-gray-300 dark:border-dark-600'
               }`}
             >
-              <option value="">Select a student</option>
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.user?.profile?.first_name} {student.user?.profile?.last_name} - {student.user?.email}
+              <option value="">Select a program</option>
+              {programs.map((program) => (
+                <option key={program.id} value={program.id}>
+                  {program.name} ({program.code}) - {program.level}
                 </option>
               ))}
             </select>
-            {errors.student_id && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.student_id}</p>
+            {errors.program_id && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.program_id}</p>
             )}
           </div>
+
+          {/* Optional Student Selection */}
+          {formData.program_id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Student (Optional - Leave empty to invoice all students in program)
+              </label>
+              <select
+                value={formData.student_id}
+                onChange={(e) => handleChange('student_id', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
+              >
+                <option value="">All students in program</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.user?.profile?.first_name} {student.user?.profile?.last_name} - {student.user?.email}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {students.length} students found in this program
+              </p>
+            </div>
+          )}
 
           {/* Due Date */}
           <div>
@@ -286,7 +339,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Fee Type Selection */}
-          {formData.student_id && (
+          {formData.program_id && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Fee Type *
@@ -297,59 +350,59 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                 className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
               >
                 <option value="program_fees">Program Fees (Based on Program Structure)</option>
-                <option value="course_fees">Course Fees (Based on Enrolled Courses)</option>
                 <option value="custom">Custom Items</option>
               </select>
             </div>
           )}
 
-          {/* Student Information Display */}
-          {loadingStudentInfo && (
+          {/* Program Information Display */}
+          {loadingProgramInfo && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span className="text-sm text-blue-700 dark:text-blue-300">Loading student information...</span>
+                <span className="text-sm text-blue-700 dark:text-blue-300">Loading program fee structure...</span>
               </div>
             </div>
           )}
 
-          {studentFeeInfo && !loadingStudentInfo && (
+          {programFeeInfo && !loadingProgramInfo && (
             <div className="bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-dark-600 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Student Information</h3>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Program Fee Structure</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">Program:</span>
                   <span className="ml-2 text-gray-900 dark:text-white font-medium">
-                    {studentFeeInfo.student.program?.name} ({studentFeeInfo.student.program?.code})
+                    {programs.find(p => p.id == formData.program_id)?.name} ({programs.find(p => p.id == formData.program_id)?.code})
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600 dark:text-gray-400">Student Number:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Students in Program:</span>
                   <span className="ml-2 text-gray-900 dark:text-white font-medium">
-                    {studentFeeInfo.student.student_number}
+                    {students.length} students
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600 dark:text-gray-400">Total Paid:</span>
+                  <span className="text-gray-600 dark:text-gray-400">Fee Items:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white font-medium">
+                    {programFeeInfo.length} items
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Total Program Fees:</span>
                   <span className="ml-2 text-green-600 dark:text-green-400 font-medium">
-                    KES {studentFeeInfo.financialSummary.totalPaid.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600 dark:text-gray-400">Outstanding:</span>
-                  <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
-                    KES {studentFeeInfo.financialSummary.totalOutstanding.toLocaleString()}
+                    KES {programFeeInfo.reduce((sum, fee) => sum + parseFloat(fee.amount_kes), 0).toLocaleString()}
                   </span>
                 </div>
               </div>
               
-              {formData.fee_type === 'course_fees' && studentFeeInfo.student.enrollments?.length > 0 && (
+              {formData.fee_type === 'program_fees' && programFeeInfo.length > 0 && (
                 <div className="mt-3">
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">Enrolled Courses:</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Available Fee Items:</span>
                   <div className="mt-1 space-y-1">
-                    {studentFeeInfo.student.enrollments.map((enrollment, index) => (
+                    {programFeeInfo.map((fee, index) => (
                       <div key={index} className="text-xs text-gray-700 dark:text-gray-300">
-                        • {enrollment.classSection.course.name} ({enrollment.classSection.course.code}) - {enrollment.classSection.course.credits} credits
+                        • {fee.item} - KES {parseFloat(fee.amount_kes).toLocaleString()}
+                        {fee.is_mandatory && <span className="text-red-600 dark:text-red-400 ml-1">(Mandatory)</span>}
                       </div>
                     ))}
                   </div>
@@ -365,14 +418,14 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                 Invoice Items *
               </label>
               <div className="flex space-x-2">
-                {formData.student_id && studentFeeInfo && (
+                {formData.program_id && programFeeInfo && (
                   <button
                     type="button"
-                    onClick={() => populateItemsFromFeeInfo(studentFeeInfo, formData.fee_type)}
+                    onClick={() => populateItemsFromFeeInfo(programFeeInfo, formData.fee_type)}
                     className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center space-x-1 text-sm"
                   >
                     <HiPlus className="h-4 w-4" />
-                    <span>Auto-fill from {formData.fee_type === 'program_fees' ? 'Program' : formData.fee_type === 'course_fees' ? 'Courses' : 'Structure'}</span>
+                    <span>Auto-fill from Program Structure</span>
                   </button>
                 )}
                 <button
@@ -503,7 +556,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               {loading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               )}
-              <span>{loading ? 'Creating...' : 'Create Invoice'}</span>
+              <span>{loading ? 'Creating...' : formData.student_id ? 'Create Invoice' : `Create Invoices for All Students (${students.length})`}</span>
             </button>
           </div>
         </form>

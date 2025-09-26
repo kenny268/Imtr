@@ -13,7 +13,8 @@ const {
   updateFeeStructure,
   deleteFeeStructure,
   getStudentFeeInfo,
-  generateStudentInvoice
+  generateStudentInvoice,
+  generateProgramInvoices
 } = require('./finance.controller');
 
 const { validate } = require('../../middleware/validate');
@@ -108,6 +109,13 @@ router.post('/students/:id/generate-invoice',
   authenticateToken,
   requirePermission('finance:write'),
   generateStudentInvoice
+);
+
+// Program-level invoice generation
+router.post('/programs/:id/generate-invoices',
+  authenticateToken,
+  requirePermission('finance:write'),
+  generateProgramInvoices
 );
 
 module.exports = router;

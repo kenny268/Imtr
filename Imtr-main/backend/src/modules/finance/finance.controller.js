@@ -858,6 +858,170 @@ const generateStudentInvoice = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
+ * /finance/programs/{id}/generate-invoices:
+ *   post:
+ *     summary: Generate invoices for all students in a program
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               due_date:
+ *                 type: string
+ *                 format: date
+ *               notes:
+ *                 type: string
+ *               student_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Optional array of specific student IDs. If empty, invoices all students in program.
+ *     responses:
+ *       201:
+ *         description: Invoices generated successfully
+ *       400:
+ *         description: Validation error
+ */
+const generateProgramInvoices = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { due_date, notes, student_ids } = req.body;
+
+  // Get program with students
+  const program = await Program.findByPk(id, {
+    include: [
+      {
+        model: Student,
+        as: 'students',
+        include: [
+          {
+            model: require('../../models').User,
+            as: 'user',
+            include: [
+              {
+                model: require('../../models').Profile,
+                as: 'profile',
+                attributes: ['first_name', 'last_name', 'phone']
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!program) {
+    return sendError(res, 'Program not found', 404);
+  }
+
+  // Filter students if specific IDs provided
+  let targetStudents = program.students;
+  if (student_ids && student_ids.length > 0) {
+    targetStudents = program.students.filter(student => student_ids.includes(student.id));
+  }
+
+  if (targetStudents.length === 0) {
+    return sendError(res, 'No students found for this program', 400);
+  }
+
+  // Get program fee structures
+  const feeStructures = await FeeStructure.findAll({
+    where: {
+      program_id: id,
+      status: 'active',
+      is_mandatory: true
+    }
+  });
+
+  if (feeStructures.length === 0) {
+    return sendError(res, 'No fee structures found for this program', 400);
+  }
+
+  const generatedInvoices = [];
+
+  // Generate invoice for each student
+  for (const student of targetStudents) {
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // Calculate total
+    const total_kes = feeStructures.reduce((sum, fee) => sum + parseFloat(fee.amount_kes), 0);
+
+    // Create invoice
+    const invoice = await Invoice.create({
+      student_id: student.id,
+      invoice_number: invoiceNumber,
+      total_kes,
+      due_date,
+      notes: notes || `Program fees for ${program.name} - ${student.user.profile.first_name} ${student.user.profile.last_name}`,
+      status: 'pending'
+    });
+
+    // Create invoice items
+    await Promise.all(
+      feeStructures.map(fee =>
+        InvoiceItem.create({
+          invoice_id: invoice.id,
+          item: fee.item,
+          amount_kes: fee.amount_kes,
+          description: fee.description || `Program fee for ${program.name}`
+        })
+      )
+    );
+
+    // Fetch complete invoice with relations
+    const completeInvoice = await Invoice.findByPk(invoice.id, {
+      include: [
+        {
+          model: Student,
+          as: 'student',
+          include: [
+            {
+              model: require('../../models').User,
+              as: 'user',
+              include: [
+                {
+                  model: require('../../models').Profile,
+                  as: 'profile',
+                  attributes: ['first_name', 'last_name', 'phone']
+                }
+              ]
+            }
+          ]
+        },
+        {
+          model: InvoiceItem,
+          as: 'items'
+        }
+      ]
+    });
+
+    generatedInvoices.push(completeInvoice);
+  }
+
+  return sendSuccess(res, {
+    invoices: generatedInvoices,
+    total_generated: generatedInvoices.length,
+    program: {
+      id: program.id,
+      name: program.name,
+      code: program.code
+    }
+  }, 'Invoices generated successfully', 201);
+});
+
+/**
+ * @swagger
  * /finance/fee-structures:
  *   post:
  *     summary: Create a new fee structure
@@ -1033,5 +1197,6 @@ module.exports = {
   updateFeeStructure,
   deleteFeeStructure,
   getStudentFeeInfo,
-  generateStudentInvoice
+  generateStudentInvoice,
+  generateProgramInvoices
 };
