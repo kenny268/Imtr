@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { HiX, HiExclamationTriangle } from 'react-icons/hi';
+import { HiX, HiExclamationCircle } from 'react-icons/hi';
 import { api } from '@/app/lib/api';
 
 const DeleteInvoiceModal = ({ isOpen, onClose, invoice, onSuccess }) => {
@@ -36,10 +36,10 @@ const DeleteInvoiceModal = ({ isOpen, onClose, invoice, onSuccess }) => {
         className="bg-white dark:bg-dark-800 rounded-xl shadow-2xl w-full max-w-md"
       >
         <div className="p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
-              <HiExclamationTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-            </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                <HiExclamationCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               Delete Invoice
             </h2>
