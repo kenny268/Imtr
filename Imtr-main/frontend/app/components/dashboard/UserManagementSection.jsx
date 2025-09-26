@@ -20,9 +20,6 @@ import {
   HiCheckCircle,
   HiXCircle
 } from 'react-icons/hi';
-import ViewUserModal from '../modals/ViewUserModal';
-import EditUserModal from '../modals/EditUserModal';
-import DeleteUserModal from '../modals/DeleteUserModal';
 
 const UserManagementSection = ({ 
   users, 
@@ -32,17 +29,15 @@ const UserManagementSection = ({
   userViewMode, 
   hasPermission, 
   setShowCreateUserModal, 
+  setShowViewModal,
+  setShowEditModal,
+  setShowDeleteModal,
+  setSelectedUser,
   handleUserFilterChange, 
   refreshUsers, 
   fetchUsers,
   setUserViewMode 
 }) => {
-  // Modal states
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-
   // Action handlers
   const handleViewUser = (user) => {
     setSelectedUser(user);
@@ -467,26 +462,6 @@ const UserManagementSection = ({
         )}
       </div>
 
-      {/* Modals */}
-      <ViewUserModal
-        isOpen={showViewModal}
-        onClose={() => setShowViewModal(false)}
-        user={selectedUser}
-      />
-      
-      <EditUserModal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        user={selectedUser}
-        onSave={handleSaveUser}
-      />
-      
-      <DeleteUserModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        user={selectedUser}
-        onDelete={handleDeleteConfirm}
-      />
     </div>
   );
 };
