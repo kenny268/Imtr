@@ -136,15 +136,33 @@ const getUserById = asyncHandler(async (req, res) => {
  */
 const updateUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const updateData = req.body;
+  const { profile, ...userData } = req.body;
 
-  const user = await User.findByPk(id);
+  const user = await User.findByPk(id, {
+    include: ['profile']
+  });
+  
   if (!user) {
     return sendError(res, 'User not found', 404);
   }
 
-  await user.update(updateData);
+  // Update user data (excluding profile)
+  if (Object.keys(userData).length > 0) {
+    await user.update(userData);
+  }
 
+  // Update profile data if provided
+  if (profile && user.profile) {
+    await user.profile.update(profile);
+  } else if (profile && !user.profile) {
+    // Create profile if it doesn't exist
+    await Profile.create({
+      user_id: user.id,
+      ...profile
+    });
+  }
+
+  // Fetch updated user with profile
   const updatedUser = await User.findByPk(id, {
     include: ['profile'],
     attributes: { exclude: ['password_hash'] }
