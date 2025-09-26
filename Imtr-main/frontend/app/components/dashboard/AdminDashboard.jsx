@@ -437,13 +437,7 @@ const AdminDashboard = ({ activeMenu }) => {
 
   // Fetch assessments
   const fetchAssessments = async (page = 1, filters = assessmentFilters) => {
-    console.log('fetchAssessments called with:', { page, filters });
-    console.log('hasPermission assessments:read:', hasPermission('assessments:read'));
-    
-    if (!hasPermission('assessments:read')) {
-      console.log('No permission for assessments:read');
-      return;
-    }
+    if (!hasPermission('assessments:read')) return;
     
     try {
       setLoading(true);
@@ -461,14 +455,10 @@ const AdminDashboard = ({ activeMenu }) => {
         sortOrder: filters.sortOrder
       });
 
-      console.log('Making API call to:', `/assessments?${queryParams}`);
       const response = await api.get(`/assessments?${queryParams}`);
-      console.log('Assessments API response:', response.data);
-      
       if (response.data.success) {
         setAssessments(response.data.data.assessments || []);
         setAssessmentPagination(response.data.data.pagination || assessmentPagination);
-        console.log('Assessments set:', response.data.data.assessments?.length || 0);
       }
     } catch (error) {
       console.error('Error fetching assessments:', error);
@@ -801,6 +791,10 @@ const AdminDashboard = ({ activeMenu }) => {
               userViewMode={userViewMode}
               hasPermission={hasPermission}
               setShowCreateUserModal={setShowCreateUserModal}
+              setShowViewModal={setShowViewModal}
+              setShowEditModal={setShowEditModal}
+              setShowDeleteModal={setShowDeleteModal}
+              setSelectedUser={setSelectedUser}
               handleUserFilterChange={handleUserFilterChange}
               refreshUsers={refreshUsers}
               fetchUsers={fetchUsers}
@@ -809,6 +803,56 @@ const AdminDashboard = ({ activeMenu }) => {
             <CreateUserModal
               isOpen={showCreateUserModal}
               onClose={() => setShowCreateUserModal(false)}
+            />
+            <ViewUserModal
+              isOpen={showViewModal}
+              onClose={() => {
+                setShowViewModal(false);
+                setSelectedUser(null);
+              }}
+              user={selectedUser}
+            />
+            <EditUserModal
+              isOpen={showEditModal}
+              onClose={() => {
+                setShowEditModal(false);
+                setSelectedUser(null);
+              }}
+              user={selectedUser}
+              onSave={async (userData) => {
+                try {
+                  const response = await api.put(`/users/${selectedUser.id}`, userData);
+                  if (response.data.success) {
+                    await fetchUsers();
+                    setShowEditModal(false);
+                    setSelectedUser(null);
+                  }
+                } catch (error) {
+                  console.error('Error updating user:', error);
+                  throw error;
+                }
+              }}
+            />
+            <DeleteUserModal
+              isOpen={showDeleteModal}
+              onClose={() => {
+                setShowDeleteModal(false);
+                setSelectedUser(null);
+              }}
+              user={selectedUser}
+              onConfirm={async () => {
+                try {
+                  const response = await api.delete(`/users/${selectedUser.id}`);
+                  if (response.data.success) {
+                    await fetchUsers();
+                    setShowDeleteModal(false);
+                    setSelectedUser(null);
+                  }
+                } catch (error) {
+                  console.error('Error deleting user:', error);
+                  throw error;
+                }
+              }}
             />
           </>
         );
