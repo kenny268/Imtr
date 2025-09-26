@@ -18,6 +18,7 @@ const EditUserModal = ({ isOpen, onClose, user, onSave }) => {
     email: '',
     role: '',
     status: '',
+    email_verified: false,
     profile: {
       first_name: '',
       last_name: '',
@@ -37,6 +38,7 @@ const EditUserModal = ({ isOpen, onClose, user, onSave }) => {
         email: user.email || '',
         role: user.role || '',
         status: user.status || '',
+        email_verified: user.email_verified || false,
         profile: {
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
@@ -227,6 +229,19 @@ const EditUserModal = ({ isOpen, onClose, user, onSave }) => {
                         <option value="pending">Pending</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      id="email_verified"
+                      checked={formData.email_verified}
+                      onChange={(e) => handleChange('email_verified', e.target.checked)}
+                      className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="email_verified" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Email Verified
+                    </label>
                   </div>
                 </div>
 
