@@ -133,8 +133,9 @@ const FinanceDashboard = ({ activeMenu }) => {
   };
 
   const renderContent = () => {
+    console.log('FinanceDashboard activeMenu:', activeMenu);
     switch (activeMenu) {
-      case 'dashboard':
+      case 'finance':
         return (
           <div className="space-y-6">
             {/* Header */}
