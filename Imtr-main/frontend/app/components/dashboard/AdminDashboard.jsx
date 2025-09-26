@@ -61,6 +61,7 @@ import CoursesSection from './CoursesSection';
 import ExaminationsSection from './ExaminationsSection';
 import FacultyDepartmentSection from './FacultyDepartmentSection';
 import LecturersSection from './LecturersSection';
+import FinanceDashboard from './FinanceDashboard';
 
 const AdminDashboard = ({ activeMenu }) => {
   const { hasPermission } = useAuth();
@@ -1453,17 +1454,7 @@ const AdminDashboard = ({ activeMenu }) => {
 
       case 'finance':
         return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Finance</h1>
-              <button className="bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors">
-                Add Transaction
-              </button>
-            </div>
-            <div className="bg-white dark:bg-dark-800 rounded-xl p-6 shadow-soft dark:shadow-soft-dark">
-              <p className="text-gray-600 dark:text-gray-400">Finance management content will be implemented here.</p>
-            </div>
-          </div>
+          <FinanceDashboard activeMenu={activeMenu} />
         );
 
       case 'library':
