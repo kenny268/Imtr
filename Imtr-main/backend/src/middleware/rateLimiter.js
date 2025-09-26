@@ -107,7 +107,7 @@ const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: (req) => {
     // Authenticated users get higher limits
-    return req.user ? 200 : 50;
+    return req.user ? 1000 : 200;
   },
   message: {
     success: false,
