@@ -172,11 +172,62 @@ const getFeeStructuresSchema = Joi.object({
     })
 });
 
+const createFeeStructureSchema = Joi.object({
+  program_id: Joi.number().integer().positive().required()
+    .messages({
+      'number.base': 'Program ID must be a number',
+      'number.integer': 'Program ID must be an integer',
+      'number.positive': 'Program ID must be positive',
+      'any.required': 'Program ID is required'
+    }),
+  item: Joi.string().min(1).max(255).required()
+    .messages({
+      'string.min': 'Fee item name is required',
+      'string.max': 'Fee item name cannot exceed 255 characters',
+      'any.required': 'Fee item name is required'
+    }),
+  amount_kes: Joi.number().positive().precision(2).required()
+    .messages({
+      'number.base': 'Amount must be a number',
+      'number.positive': 'Amount must be positive',
+      'any.required': 'Amount is required'
+    }),
+  description: Joi.string().max(1000).optional().allow('')
+    .messages({
+      'string.max': 'Description cannot exceed 1000 characters'
+    }),
+  is_mandatory: Joi.boolean().default(true),
+  due_date: Joi.date().optional().allow(''),
+  status: Joi.string().valid('active', 'inactive').default('active')
+});
+
+const updateFeeStructureSchema = Joi.object({
+  item: Joi.string().min(1).max(255).optional()
+    .messages({
+      'string.min': 'Fee item name is required',
+      'string.max': 'Fee item name cannot exceed 255 characters'
+    }),
+  amount_kes: Joi.number().positive().precision(2).optional()
+    .messages({
+      'number.base': 'Amount must be a number',
+      'number.positive': 'Amount must be positive'
+    }),
+  description: Joi.string().max(1000).optional().allow('')
+    .messages({
+      'string.max': 'Description cannot exceed 1000 characters'
+    }),
+  is_mandatory: Joi.boolean().optional(),
+  due_date: Joi.date().optional().allow(''),
+  status: Joi.string().valid('active', 'inactive').optional()
+});
+
 module.exports = {
   createInvoiceSchema,
   updateInvoiceSchema,
   createPaymentSchema,
   getInvoicesSchema,
   getPaymentsSchema,
-  getFeeStructuresSchema
+  getFeeStructuresSchema,
+  createFeeStructureSchema,
+  updateFeeStructureSchema
 };

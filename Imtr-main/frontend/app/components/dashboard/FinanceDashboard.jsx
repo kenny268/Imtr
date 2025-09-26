@@ -133,7 +133,6 @@ const FinanceDashboard = ({ activeMenu }) => {
   };
 
   const renderContent = () => {
-    console.log('FinanceDashboard activeMenu:', activeMenu);
     switch (activeMenu) {
       case 'finance':
         return (

@@ -11,6 +11,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     student_id: '',
     due_date: '',
+    fee_type: 'program_fees', // New field for fee type
     notes: '',
     items: [
       {
@@ -20,6 +21,9 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       }
     ]
   });
+
+  const [studentFeeInfo, setStudentFeeInfo] = useState(null);
+  const [loadingStudentInfo, setLoadingStudentInfo] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -40,6 +44,53 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  const fetchStudentFeeInfo = async (studentId) => {
+    if (!studentId) {
+      setStudentFeeInfo(null);
+      return;
+    }
+
+    setLoadingStudentInfo(true);
+    try {
+      const response = await api.get(`/finance/students/${studentId}/fee-info`);
+      if (response.data.success) {
+        setStudentFeeInfo(response.data.data);
+        // Auto-populate items based on fee type
+        populateItemsFromFeeInfo(response.data.data, formData.fee_type);
+      }
+    } catch (error) {
+      console.error('Error fetching student fee info:', error);
+      setStudentFeeInfo(null);
+    } finally {
+      setLoadingStudentInfo(false);
+    }
+  };
+
+  const populateItemsFromFeeInfo = (feeInfo, feeType) => {
+    let items = [];
+
+    if (feeType === 'program_fees' && feeInfo.feeStructures) {
+      items = feeInfo.feeStructures.map(fee => ({
+        item: fee.item,
+        amount_kes: fee.amount_kes,
+        description: fee.description || `Program fee for ${feeInfo.student.program.name}`
+      }));
+    } else if (feeType === 'course_fees' && feeInfo.student.enrollments) {
+      items = feeInfo.student.enrollments.map(enrollment => ({
+        item: `${enrollment.classSection.course.name} (${enrollment.classSection.course.code})`,
+        amount_kes: enrollment.classSection.course.credits * 1000, // 1000 KES per credit
+        description: `Course fee for ${enrollment.classSection.course.name} - ${enrollment.classSection.course.credits} credits`
+      }));
+    }
+
+    if (items.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        items
+      }));
+    }
+  };
+
   const handleChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -52,6 +103,16 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
         ...prev,
         [field]: ''
       }));
+    }
+
+    // Fetch student fee info when student is selected
+    if (field === 'student_id') {
+      fetchStudentFeeInfo(value);
+    }
+
+    // Re-populate items when fee type changes
+    if (field === 'fee_type' && studentFeeInfo) {
+      populateItemsFromFeeInfo(studentFeeInfo, value);
     }
   };
 
@@ -224,20 +285,105 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
             )}
           </div>
 
+          {/* Fee Type Selection */}
+          {formData.student_id && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Fee Type *
+              </label>
+              <select
+                value={formData.fee_type}
+                onChange={(e) => handleChange('fee_type', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-dark-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent dark:bg-dark-700 dark:text-white"
+              >
+                <option value="program_fees">Program Fees (Based on Program Structure)</option>
+                <option value="course_fees">Course Fees (Based on Enrolled Courses)</option>
+                <option value="custom">Custom Items</option>
+              </select>
+            </div>
+          )}
+
+          {/* Student Information Display */}
+          {loadingStudentInfo && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span className="text-sm text-blue-700 dark:text-blue-300">Loading student information...</span>
+              </div>
+            </div>
+          )}
+
+          {studentFeeInfo && !loadingStudentInfo && (
+            <div className="bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-dark-600 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Student Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Program:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white font-medium">
+                    {studentFeeInfo.student.program?.name} ({studentFeeInfo.student.program?.code})
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Student Number:</span>
+                  <span className="ml-2 text-gray-900 dark:text-white font-medium">
+                    {studentFeeInfo.student.student_number}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Total Paid:</span>
+                  <span className="ml-2 text-green-600 dark:text-green-400 font-medium">
+                    KES {studentFeeInfo.financialSummary.totalPaid.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">Outstanding:</span>
+                  <span className="ml-2 text-red-600 dark:text-red-400 font-medium">
+                    KES {studentFeeInfo.financialSummary.totalOutstanding.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              
+              {formData.fee_type === 'course_fees' && studentFeeInfo.student.enrollments?.length > 0 && (
+                <div className="mt-3">
+                  <span className="text-gray-600 dark:text-gray-400 text-sm">Enrolled Courses:</span>
+                  <div className="mt-1 space-y-1">
+                    {studentFeeInfo.student.enrollments.map((enrollment, index) => (
+                      <div key={index} className="text-xs text-gray-700 dark:text-gray-300">
+                        • {enrollment.classSection.course.name} ({enrollment.classSection.course.code}) - {enrollment.classSection.course.credits} credits
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Invoice Items */}
           <div>
             <div className="flex justify-between items-center mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Invoice Items *
               </label>
-              <button
-                type="button"
-                onClick={addItem}
-                className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center space-x-1"
-              >
-                <HiPlus className="h-4 w-4" />
-                <span>Add Item</span>
-              </button>
+              <div className="flex space-x-2">
+                {formData.student_id && studentFeeInfo && (
+                  <button
+                    type="button"
+                    onClick={() => populateItemsFromFeeInfo(studentFeeInfo, formData.fee_type)}
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center space-x-1 text-sm"
+                  >
+                    <HiPlus className="h-4 w-4" />
+                    <span>Auto-fill from {formData.fee_type === 'program_fees' ? 'Program' : formData.fee_type === 'course_fees' ? 'Courses' : 'Structure'}</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 flex items-center space-x-1"
+                >
+                  <HiPlus className="h-4 w-4" />
+                  <span>Add Item</span>
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">

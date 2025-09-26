@@ -1,4 +1,4 @@
-const { Invoice, Payment, InvoiceItem, Student, Program, FeeStructure } = require('../../models');
+const { Invoice, Payment, InvoiceItem, Student, Program, FeeStructure, Enrollment, ClassSection, Course } = require('../../models');
 const { sendSuccess, sendError } = require('../../utils/responses');
 const { asyncHandler } = require('../../middleware/errorHandler');
 const { Op } = require('sequelize');
@@ -555,6 +555,472 @@ const getFeeStructures = asyncHandler(async (req, res) => {
   return sendSuccess(res, feeStructures, 'Fee structures retrieved successfully');
 });
 
+/**
+ * @swagger
+ * /finance/students/{id}/fee-info:
+ *   get:
+ *     summary: Get student fee information and program details
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student fee information
+ *       404:
+ *         description: Student not found
+ */
+const getStudentFeeInfo = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const student = await Student.findByPk(id, {
+    include: [
+      {
+        model: require('../../models').User,
+        as: 'user',
+        include: [
+          {
+            model: require('../../models').Profile,
+            as: 'profile',
+            attributes: ['first_name', 'last_name', 'phone', 'email']
+          }
+        ]
+      },
+      {
+        model: Program,
+        as: 'program',
+        attributes: ['id', 'name', 'code', 'level', 'duration_months']
+      },
+      {
+        model: Enrollment,
+        as: 'enrollments',
+        include: [
+          {
+            model: ClassSection,
+            as: 'classSection',
+            include: [
+              {
+                model: Course,
+                as: 'course',
+                attributes: ['id', 'name', 'code', 'credits']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        model: Invoice,
+        as: 'invoices',
+        include: [
+          {
+            model: InvoiceItem,
+            as: 'items'
+          },
+          {
+            model: Payment,
+            as: 'payments',
+            where: { status: 'completed' },
+            required: false
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!student) {
+    return sendError(res, 'Student not found', 404);
+  }
+
+  // Get program-specific fee structures
+  const feeStructures = await FeeStructure.findAll({
+    where: {
+      program_id: student.program_id,
+      status: 'active'
+    },
+    order: [['is_mandatory', 'DESC'], ['item', 'ASC']]
+  });
+
+  // Calculate total paid amount
+  const totalPaid = student.invoices?.reduce((total, invoice) => {
+    const invoicePaid = invoice.payments?.reduce((sum, payment) => sum + parseFloat(payment.amount_kes), 0) || 0;
+    return total + invoicePaid;
+  }, 0) || 0;
+
+  // Calculate total outstanding
+  const totalOutstanding = student.invoices?.reduce((total, invoice) => {
+    const invoicePaid = invoice.payments?.reduce((sum, payment) => sum + parseFloat(payment.amount_kes), 0) || 0;
+    const invoiceTotal = parseFloat(invoice.total_kes);
+    return total + (invoiceTotal - invoicePaid);
+  }, 0) || 0;
+
+  const studentFeeInfo = {
+    student: {
+      id: student.id,
+      user: student.user,
+      program: student.program,
+      enrollments: student.enrollments,
+      student_number: student.student_number,
+      admission_date: student.admission_date,
+      status: student.status
+    },
+    feeStructures,
+    financialSummary: {
+      totalPaid,
+      totalOutstanding,
+      totalInvoices: student.invoices?.length || 0,
+      paidInvoices: student.invoices?.filter(invoice => {
+        const paid = invoice.payments?.reduce((sum, payment) => sum + parseFloat(payment.amount_kes), 0) || 0;
+        return paid >= parseFloat(invoice.total_kes);
+      }).length || 0
+    },
+    recentInvoices: student.invoices?.slice(0, 5) || []
+  };
+
+  return sendSuccess(res, studentFeeInfo, 'Student fee information retrieved successfully');
+});
+
+/**
+ * @swagger
+ * /finance/students/{id}/generate-invoice:
+ *   post:
+ *     summary: Generate invoice for student based on program and enrolled courses
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fee_type:
+ *                 type: string
+ *                 enum: [program_fees, course_fees, custom]
+ *               due_date:
+ *                 type: string
+ *                 format: date
+ *               custom_items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     item:
+ *                       type: string
+ *                     amount_kes:
+ *                       type: number
+ *                     description:
+ *                       type: string
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Invoice generated successfully
+ *       400:
+ *         description: Validation error
+ */
+const generateStudentInvoice = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { fee_type, due_date, custom_items, notes } = req.body;
+
+  // Get student with program and enrollment info
+  const student = await Student.findByPk(id, {
+    include: [
+      {
+        model: Program,
+        as: 'program'
+      },
+      {
+        model: Enrollment,
+        as: 'enrollments',
+        include: [
+          {
+            model: ClassSection,
+            as: 'classSection',
+            include: [
+              {
+                model: Course,
+                as: 'course'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+
+  if (!student) {
+    return sendError(res, 'Student not found', 404);
+  }
+
+  let invoiceItems = [];
+
+  if (fee_type === 'program_fees') {
+    // Get program-specific fees
+    const feeStructures = await FeeStructure.findAll({
+      where: {
+        program_id: student.program_id,
+        status: 'active',
+        is_mandatory: true
+      }
+    });
+
+    invoiceItems = feeStructures.map(fee => ({
+      item: fee.item,
+      amount_kes: fee.amount_kes,
+      description: fee.description || `Program fee for ${student.program.name}`
+    }));
+  } else if (fee_type === 'course_fees') {
+    // Generate fees based on enrolled courses
+    const enrolledCourses = student.enrollments?.map(enrollment => enrollment.classSection.course) || [];
+    
+    invoiceItems = enrolledCourses.map(course => ({
+      item: `${course.name} (${course.code})`,
+      amount_kes: course.credits * 1000, // Assuming 1000 KES per credit
+      description: `Course fee for ${course.name} - ${course.credits} credits`
+    }));
+  } else if (fee_type === 'custom' && custom_items) {
+    invoiceItems = custom_items;
+  }
+
+  if (invoiceItems.length === 0) {
+    return sendError(res, 'No items to invoice', 400);
+  }
+
+  // Generate invoice number
+  const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+  // Calculate total
+  const total_kes = invoiceItems.reduce((sum, item) => sum + parseFloat(item.amount_kes), 0);
+
+  // Create invoice
+  const invoice = await Invoice.create({
+    student_id: student.id,
+    invoice_number: invoiceNumber,
+    total_kes,
+    due_date,
+    notes: notes || `Generated invoice for ${student.user.profile.first_name} ${student.user.profile.last_name}`,
+    status: 'pending'
+  });
+
+  // Create invoice items
+  const createdItems = await Promise.all(
+    invoiceItems.map(item =>
+      InvoiceItem.create({
+        invoice_id: invoice.id,
+        item: item.item,
+        amount_kes: item.amount_kes,
+        description: item.description
+      })
+    )
+  );
+
+  // Fetch complete invoice with relations
+  const completeInvoice = await Invoice.findByPk(invoice.id, {
+    include: [
+      {
+        model: Student,
+        as: 'student',
+        include: [
+          {
+            model: require('../../models').User,
+            as: 'user',
+            include: [
+              {
+                model: require('../../models').Profile,
+                as: 'profile',
+                attributes: ['first_name', 'last_name', 'phone']
+              }
+            ]
+          }
+        ]
+      },
+      {
+        model: InvoiceItem,
+        as: 'items'
+      }
+    ]
+  });
+
+  return sendSuccess(res, completeInvoice, 'Invoice generated successfully', 201);
+});
+
+/**
+ * @swagger
+ * /finance/fee-structures:
+ *   post:
+ *     summary: Create a new fee structure
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - program_id
+ *               - item
+ *               - amount_kes
+ *             properties:
+ *               program_id:
+ *                 type: integer
+ *               item:
+ *                 type: string
+ *               amount_kes:
+ *                 type: number
+ *               description:
+ *                 type: string
+ *               is_mandatory:
+ *                 type: boolean
+ *               due_date:
+ *                 type: string
+ *                 format: date
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       201:
+ *         description: Fee structure created successfully
+ *       400:
+ *         description: Validation error
+ */
+const createFeeStructure = asyncHandler(async (req, res) => {
+  const { program_id, item, amount_kes, description, is_mandatory, due_date, status } = req.body;
+
+  const feeStructure = await FeeStructure.create({
+    program_id,
+    item,
+    amount_kes,
+    description,
+    is_mandatory: is_mandatory !== undefined ? is_mandatory : true,
+    due_date,
+    status: status || 'active'
+  });
+
+  const completeFeeStructure = await FeeStructure.findByPk(feeStructure.id, {
+    include: [
+      {
+        model: Program,
+        as: 'program',
+        attributes: ['id', 'name', 'code']
+      }
+    ]
+  });
+
+  return sendSuccess(res, completeFeeStructure, 'Fee structure created successfully', 201);
+});
+
+/**
+ * @swagger
+ * /finance/fee-structures/{id}:
+ *   put:
+ *     summary: Update a fee structure
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               item:
+ *                 type: string
+ *               amount_kes:
+ *                 type: number
+ *               description:
+ *                 type: string
+ *               is_mandatory:
+ *                 type: boolean
+ *               due_date:
+ *                 type: string
+ *                 format: date
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *     responses:
+ *       200:
+ *         description: Fee structure updated successfully
+ *       404:
+ *         description: Fee structure not found
+ */
+const updateFeeStructure = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
+  const feeStructure = await FeeStructure.findByPk(id);
+  if (!feeStructure) {
+    return sendError(res, 'Fee structure not found', 404);
+  }
+
+  await feeStructure.update(updateData);
+
+  const updatedFeeStructure = await FeeStructure.findByPk(id, {
+    include: [
+      {
+        model: Program,
+        as: 'program',
+        attributes: ['id', 'name', 'code']
+      }
+    ]
+  });
+
+  return sendSuccess(res, updatedFeeStructure, 'Fee structure updated successfully');
+});
+
+/**
+ * @swagger
+ * /finance/fee-structures/{id}:
+ *   delete:
+ *     summary: Delete a fee structure
+ *     tags: [Finance]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Fee structure deleted successfully
+ *       404:
+ *         description: Fee structure not found
+ */
+const deleteFeeStructure = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const feeStructure = await FeeStructure.findByPk(id);
+  if (!feeStructure) {
+    return sendError(res, 'Fee structure not found', 404);
+  }
+
+  await feeStructure.destroy();
+
+  return sendSuccess(res, null, 'Fee structure deleted successfully');
+});
+
 module.exports = {
   getInvoices,
   getInvoiceById,
@@ -562,5 +1028,10 @@ module.exports = {
   getPayments,
   createPayment,
   getFinancialStatistics,
-  getFeeStructures
+  getFeeStructures,
+  createFeeStructure,
+  updateFeeStructure,
+  deleteFeeStructure,
+  getStudentFeeInfo,
+  generateStudentInvoice
 };
